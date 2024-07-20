@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 from llama_cpp_agent import MessagesFormatterType
 from virtual_game_master import VirtualGameMasterConfig, VirtualGameMaster
-from chat_api import LlamaAgentProvider, OpenAIChatAPI, OpenRouterAPIPromptMode
+from chat_api import LlamaAgentProvider, OpenAIChatAPI, OpenRouterAPIPromptMode, VirtualGameMasterChatAPISelector
 
 load_dotenv()
 
@@ -47,12 +47,7 @@ def run_cli(app: VirtualGameMaster):
 if __name__ == "__main__":
     config = VirtualGameMasterConfig()
     config.GAME_SAVE_FOLDER = "chat_history/new_game"
-    api = OpenAIChatAPI(config.API_KEY, config.API_URL, config.MODEL)
-    api.settings.temperature = config.TEMPERATURE
-    api.settings.top_p = config.TOP_P
-    # Not available when using OpenAI client
-    # api.settings.top_k = config.TOP_K
-    # api.settings.min_p = config.MIN_P
-    # api.settings.tfs_z = config.TFS_Z
+    api_selector = VirtualGameMasterChatAPISelector(config)
+    api = api_selector.get_api()
     app = VirtualGameMaster(config, api, False)
     run_cli(app)

@@ -6,6 +6,7 @@ import requests
 
 from openai import OpenAI
 
+from VirtualGameMaster.virtual_game_master import VirtualGameMasterConfig
 from llama_cpp_agent.chat_history.messages import Roles
 from llama_cpp_agent.llm_output_settings import LlmStructuredOutputSettings, LlmStructuredOutputType
 from llama_cpp_agent.providers import LlamaCppServerProvider
@@ -249,3 +250,32 @@ class LlamaAgentProvider(ChatAPI):
         for tok in self.provider.create_completion(prompt, self.structured_settings, self.settings, ""):
             text = tok['choices'][0]['text']
             yield text
+
+
+class VirtualGameMasterChatAPISelector:
+    def __init__(self, config: VirtualGameMasterConfig):
+        self.config = config
+
+    def get_api(self) -> ChatAPI:
+        if self.config.API_TYPE == "openai":
+            api = OpenAIChatAPI(self.config.API_KEY, self.config.API_URL, self.config.MODEL)
+            api.settings.temperature = self.config.TEMPERATURE
+            api.settings.top_p = self.config.TOP_P
+            return api
+        elif self.config.API_TYPE == "openrouter":
+            api = OpenRouterAPI(self.config.API_KEY, self.config.MODEL)
+            api.settings.temperature = self.config.TEMPERATURE
+            api.settings.top_p = self.config.TOP_P
+            api.settings.top_k = self.config.TOP_K
+            api.settings.min_p = self.config.MIN_P
+            return api
+        elif self.config.API_TYPE == "llamacpp":
+            api = LlamaAgentProvider(self.config.API_URL)
+            api.settings.temperature = self.config.TEMPERATURE
+            api.settings.top_p = self.config.TOP_P
+            api.settings.top_k = self.config.TOP_K
+            api.settings.min_p = self.config.MIN_P
+            api.settings.tfs_z = self.config.TFS_Z
+            return api
+        else:
+            raise ValueError(f"Unsupported API type: {self.config.API_TYPE}")
