@@ -15,20 +15,22 @@ from chat_history import ChatHistory, Message
 from utilities import load_yaml_initial_game_state
 from command_system import CommandSystem
 import commands
+
 # Load environment variables
 load_dotenv()
 
 
 class VirtualGameMasterConfig:
-    GAME_SAVE_FOLDER = os.getenv('GAME_SAVE_FOLDER')
-    INITIAL_GAME_STATE = os.getenv('INITIAL_GAME_STATE')
-    MAX_MESSAGES = int(os.getenv('MAX_MESSAGES'))
-    KEPT_MESSAGES = int(os.getenv('KEPT_MESSAGES'))
-    SYSTEM_MESSAGE_FILE = os.getenv('SYSTEM_MESSAGE_FILE')
-    SAVE_SYSTEM_MESSAGE_FILE = os.getenv('SAVE_SYSTEM_MESSAGE_FILE')
-    SAVE_REMINDER_MESSAGE_FILE = os.getenv('SAVE_REMINDER_MESSAGE_FILE')
-    API_KEY = os.getenv('API_KEY')
-    MODEL = os.getenv('MODEL')
+    def __init__(self):
+        self.GAME_SAVE_FOLDER = os.getenv("GAME_SAVE_FOLDER")
+        self.API_KEY = os.getenv("API_KEY")
+        self.MODEL = os.getenv("MODEL")
+        self.SYSTEM_MESSAGE_FILE = os.getenv("SYSTEM_MESSAGE_FILE")
+        self.SAVE_SYSTEM_MESSAGE_FILE = os.getenv("SAVE_SYSTEM_MESSAGE_FILE")
+        self.SAVE_REMINDER_MESSAGE_FILE = os.getenv("SAVE_REMINDER_MESSAGE_FILE")
+        self.INITIAL_GAME_STATE = os.getenv("INITIAL_GAME_STATE")
+        self.MAX_MESSAGES = int(os.getenv("MAX_MESSAGES"))
+        self.KEPT_MESSAGES = int(os.getenv("KEPT_MESSAGES"))
 
 
 class VirtualGameMaster:
