@@ -36,6 +36,22 @@ inventory:
   - 50 feet of hempen rope
   - 75 gold pieces
 
+special_items:
+  - name: Ring of Whispered Thoughts
+    description: >
+      This unassuming silver ring is adorned with a small, smoky quartz gem. 
+      When activated, the gem seems to swirl with mist-like patterns.
+    properties:
+      - Once per day, the wearer can activate the ring as a bonus action.
+      - For the next hour, the wearer can read the surface thoughts of any creature within 180 feet that the wearer can see.
+      - The target is unaware of this mind-reading attempt and gets no saving throw.
+      - The wearer receives general impressions, emotional states, and current thoughts. Complex or deep memories are not accessible.
+      - The effect is completely silent and invisible, making it undetectable through normal means.
+      - If a creature has telepathic abilities or is protected against mind-reading, they might sense the intrusion with a DC 20 Wisdom (Insight) check.
+    limitations:
+      - The ring requires attunement.
+      - Prolonged use (more than 3 times per week) might have side effects like headaches or temporary inability to block out others' thoughts.
+
 party_members:
   - Elysia Thunderscribe
   - Lyra Flameheart
@@ -69,7 +85,6 @@ character_details:
       - Charcoal-black hair with silver streaks
       - Celestial-blue robe with runic symbols
       - Ornate staff with crystal orb
-
   Lyra Flameheart:
     Race: Eladrin
     Class: Fighter

@@ -20,4 +20,15 @@ Update the Game Information based on recent events in the chat history. Follow t
 19. Consider how recent events might affect the larger world state or faction relationships.
 20. Subtly hint at future plot points or challenges when appropriate (foreshadowing).
 
-Present only the sections that have been updated, using the original format and tags. Ensure each updated section is comprehensive and accurately reflects the current game state.
+Ensure each updated section is comprehensive and accurately reflects the current game state. Present only the updated sections in your response, using the following format with xml-tags:
+
+<section_name>
+Updated content
+</section_name>
+
+Example output:
+
+<location>
+New York City
+</location>
+

@@ -19,6 +19,7 @@ You are tasked with updating the Game Information sections based on recent devel
 - Active Quests
 - Key NPCs
 - Inventory
+- Special Items
 - World State
 - Factions
 - Time and Calendar
@@ -92,6 +93,10 @@ You are tasked with updating the Game Information sections based on recent devel
 {inventory}
 </inventory>
 
+<special_items>
+{special_items}
+</special_items>
+
 <world_state>
 {world_state}
 </world_state>
@@ -104,8 +109,13 @@ You are tasked with updating the Game Information sections based on recent devel
 {time_and_calendar}
 </time_and_calendar>
 
-Present only the updated sections in your response, using the following format:
+Present only the updated sections in your response, using the following format with xml-tags:
 
 <section_name>
 Updated content
 </section_name>
+
+Example output:
+<location>
+New York City
+</location>

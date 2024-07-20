@@ -4,8 +4,6 @@ import os
 import re
 
 from typing import Tuple, Generator
-from typing import Callable, Dict
-from functools import wraps
 
 from dotenv import load_dotenv
 
@@ -18,8 +16,6 @@ import commands
 
 # Load environment variables
 load_dotenv()
-
-
 
 
 class VirtualGameMasterConfig:
@@ -89,7 +85,7 @@ class VirtualGameMaster:
         self.template_fields = load_yaml_initial_game_state(config.INITIAL_GAME_STATE)
         self.history = ChatHistory(config.GAME_SAVE_FOLDER)
         self.history_offset = 0
-        self.messages_since_last_save = 0
+
         self.debug_mode = debug_mode
         self.next_message_id = 0
         self.max_messages = config.MAX_MESSAGES
@@ -142,11 +138,9 @@ class VirtualGameMaster:
         self.history.add_message(Message("assistant", response.strip(), self.next_message_id))
         self.next_message_id += 1
         self.history.save_history()
-        self.messages_since_last_save += 2
 
-        if self.messages_since_last_save >= self.max_messages:
+        if len(self.history.messages) - self.history_offset >= self.max_messages:
             self.generate_save_state()
-            self.messages_since_last_save = 0
 
     def edit_message(self, message_id: int, new_content: str) -> bool:
         success = self.history.edit_message(message_id, new_content)
@@ -156,7 +150,6 @@ class VirtualGameMaster:
 
     def manual_save(self):
         self.generate_save_state()
-        self.messages_since_last_save = 0
 
     def generate_save_state(self):
         history = self.history.to_list()[self.history_offset:]
@@ -172,7 +165,7 @@ class VirtualGameMaster:
 
         self.update_template_fields(response)
         self.history_offset = len(self.history.messages) - self.kept_messages
-        self.messages_since_last_save = 0
+
         self.save()
 
     def update_template_fields(self, save_state: str):
@@ -187,7 +180,6 @@ class VirtualGameMaster:
         save_data = {
             "template_fields": self.template_fields,
             "history_offset": self.history_offset,
-            "messages_since_last_save": self.messages_since_last_save,
             "next_message_id": self.next_message_id
         }
         with open(f"{self.config.GAME_SAVE_FOLDER}/{filename}", "w") as f:
@@ -212,7 +204,6 @@ class VirtualGameMaster:
                 save_data = json.load(f)
             self.template_fields = save_data.get("template_fields", self.template_fields)
             self.history_offset = save_data.get("history_offset", 0)
-            self.messages_since_last_save = save_data.get("messages_since_last_save", 0)
             self.next_message_id = save_data.get("next_message_id", self.next_message_id)
             print(f"Loaded the most recent game state: {latest_save}")
         except (FileNotFoundError, json.JSONDecodeError) as e:

@@ -6,7 +6,6 @@ import requests
 
 from openai import OpenAI
 
-
 from llama_cpp_agent.chat_history.messages import Roles
 from llama_cpp_agent.llm_output_settings import LlmStructuredOutputSettings, LlmStructuredOutputType
 from llama_cpp_agent.providers import LlamaCppServerProvider
@@ -16,11 +15,14 @@ from llama_cpp_agent.messages_formatter import get_predefined_messages_formatter
 
 class ChatAPI(ABC):
     @abstractmethod
-    def get_response(self, messages: List[Dict[str, str]]) -> str:
+    def get_response(self, messages: List[Dict[str, str]], settings=None) -> str:
         pass
 
     @abstractmethod
-    def get_streaming_response(self, messages: List[Dict[str, str]]) -> Generator[str, None, None]:
+    def get_streaming_response(self, messages: List[Dict[str, str]], settings=None) -> Generator[str, None, None]:
+        pass
+
+    def get_default_settings(self):
         pass
 
 
@@ -36,26 +38,29 @@ class OpenAIChatAPI(ChatAPI):
         self.model = model
         self.settings = OpenAISettings()
 
-    def get_response(self, messages: List[Dict[str, str]]) -> str:
+    def get_response(self, messages: List[Dict[str, str]], settings=None) -> str:
         response = self.client.chat.completions.create(
             model=self.model,
             messages=messages,
-            temperature=self.settings.temperature,
-            top_p=self.settings.top_p
+            temperature=self.settings.temperature if settings is None else settings.temperature,
+            top_p=self.settings.top_p if settings is None else settings.top_p
         )
         return response.choices[0].message.content
 
-    def get_streaming_response(self, messages: List[Dict[str, str]]) -> Generator[str, None, None]:
+    def get_streaming_response(self, messages: List[Dict[str, str]], settings=None) -> Generator[str, None, None]:
         stream = self.client.chat.completions.create(
             model=self.model,
             messages=messages,
             stream=True,
-            temperature=self.settings.temperature,
-            top_p=self.settings.top_p
+            temperature=self.settings.temperature if settings is None else settings.temperature,
+            top_p=self.settings.top_p if settings is None else settings.top_p
         )
         for chunk in stream:
             if chunk.choices[0].delta.content is not None:
                 yield chunk.choices[0].delta.content
+
+    def get_default_settings(self):
+        return OpenAISettings()
 
 
 class OpenRouterSettings:
@@ -79,35 +84,35 @@ class OpenRouterAPI(ChatAPI):
         self.base_url = "https://openrouter.ai/api/v1/chat/completions"
         self.settings = OpenRouterSettings()
 
-    def _prepare_request_body(self, messages: List[Dict[str, str]], stream: bool = False) -> Dict:
+    def _prepare_request_body(self, messages: List[Dict[str, str]], stream: bool = False, settings=None) -> Dict:
         body = {
             "model": self.model,
             "messages": messages,
             "stream": stream,
-            "temperature": self.settings.temperature,
-            "top_p": self.settings.top_p,
-            "top_k": self.settings.top_k,
-            "frequency_penalty": self.settings.frequency_penalty,
-            "presence_penalty": self.settings.presence_penalty,
-            "repetition_penalty": self.settings.repetition_penalty,
-            "min_p": self.settings.min_p,
-            "top_a": self.settings.top_a,
+            "temperature": self.settings.temperature if settings is None else settings.temperature,
+            "top_p": self.settings.top_p if settings is None else settings.top_p,
+            "top_k": self.settings.top_k if settings is None else settings.top_k,
+            "frequency_penalty": self.settings.frequency_penalty if settings is None else settings.frequency_penalty,
+            "presence_penalty": self.settings.presence_penalty if settings is None else settings.presence_penalty,
+            "repetition_penalty": self.settings.repetition_penalty if settings is None else settings.repetition_penalty,
+            "min_p": self.settings.min_p if settings is None else settings.min_p,
+            "top_a": self.settings.top_a if settings is None else settings.top_a,
         }
         if self.settings.seed is not None:
-            body["seed"] = self.settings.seed
+            body["seed"] = self.settings.seed if settings is None else settings.seed
         if self.settings.max_tokens is not None:
-            body["max_tokens"] = self.settings.max_tokens
+            body["max_tokens"] = self.settings.max_tokens if settings is None else settings.max_tokens
         return body
 
-    def get_response(self, messages: List[Dict[str, str]]) -> str:
+    def get_response(self, messages: List[Dict[str, str]], settings=None) -> str:
         response = requests.post(
             url=self.base_url,
             headers={"Authorization": f"Bearer {self.api_key}"},
-            json=self._prepare_request_body(messages)
+            json=self._prepare_request_body(messages, settings)
         )
         return response.json()['choices'][0]['message']['content']
 
-    def get_streaming_response(self, messages: List[Dict[str, str]]) -> Generator[str, None, None]:
+    def get_streaming_response(self, messages: List[Dict[str, str]], settings=None) -> Generator[str, None, None]:
         response = requests.post(
             url=self.base_url,
             headers={
@@ -115,7 +120,7 @@ class OpenRouterAPI(ChatAPI):
                 "Content-Type": "application/json",
                 "Accept": "text/event-stream"
             },
-            json=self._prepare_request_body(messages, stream=True),
+            json=self._prepare_request_body(messages, stream=True, settings=settings),
             stream=True
         )
 
@@ -133,6 +138,9 @@ class OpenRouterAPI(ChatAPI):
                                     yield content
                         except json.JSONDecodeError:
                             print(f"Error decoding JSON: {data}")
+
+    def get_default_settings(self):
+        return OpenRouterSettings()
 
 
 class OpenRouterAPIPromptMode(ChatAPI):
@@ -152,21 +160,21 @@ class OpenRouterAPIPromptMode(ChatAPI):
             }
             self.main_message_formatter = MessagesFormatter("", prompt_markers, False, ["### Player:"], False)
 
-    def _prepare_request_body(self, messages: List[Dict[str, str]], stream: bool = False) -> Dict:
+    def _prepare_request_body(self, messages: List[Dict[str, str]], stream: bool = False, settings=None) -> Dict:
         prompt, _ = self.main_message_formatter.format_conversation(messages, Roles.assistant)
         print(prompt)
         body = {
             "model": self.model,
             "prompt": prompt,
             "stream": stream,
-            "temperature": self.settings.temperature,
-            "top_p": self.settings.top_p,
-            "top_k": self.settings.top_k,
-            "frequency_penalty": self.settings.frequency_penalty,
-            "presence_penalty": self.settings.presence_penalty,
-            "repetition_penalty": self.settings.repetition_penalty,
-            "min_p": self.settings.min_p,
-            "top_a": self.settings.top_a,
+            "temperature": self.settings.temperature if settings is None else settings.temperature,
+            "top_p": self.settings.top_p if settings is None else settings.top_p,
+            "top_k": self.settings.top_k if settings is None else settings.top_k,
+            "frequency_penalty": self.settings.frequency_penalty if settings is None else settings.frequency_penalty,
+            "presence_penalty": self.settings.presence_penalty if settings is None else settings.presence_penalty,
+            "repetition_penalty": self.settings.repetition_penalty if settings is None else settings.repetition_penalty,
+            "min_p": self.settings.min_p if settings is None else settings.min_p,
+            "top_a": self.settings.top_a if settings is None else settings.top_a,
         }
         if self.settings.seed is not None:
             body["seed"] = self.settings.seed
@@ -174,15 +182,15 @@ class OpenRouterAPIPromptMode(ChatAPI):
             body["max_tokens"] = self.settings.max_tokens
         return body
 
-    def get_response(self, messages: List[Dict[str, str]]) -> str:
+    def get_response(self, messages: List[Dict[str, str]], settings=None) -> str:
         response = requests.post(
             url=self.base_url,
             headers={"Authorization": f"Bearer {self.api_key}"},
-            json=self._prepare_request_body(messages)
+            json=self._prepare_request_body(messages, settings)
         )
         return response.json()['choices'][0]['text']
 
-    def get_streaming_response(self, messages: List[Dict[str, str]]) -> Generator[str, None, None]:
+    def get_streaming_response(self, messages: List[Dict[str, str]], settings=None) -> Generator[str, None, None]:
         response = requests.post(
             url=self.base_url,
             headers={
@@ -190,7 +198,7 @@ class OpenRouterAPIPromptMode(ChatAPI):
                 "Content-Type": "application/json",
                 "Accept": "text/event-stream"
             },
-            json=self._prepare_request_body(messages, stream=True),
+            json=self._prepare_request_body(messages, stream=True, settings=settings),
             stream=True
         )
 
@@ -208,6 +216,9 @@ class OpenRouterAPIPromptMode(ChatAPI):
                                     yield content
                         except json.JSONDecodeError:
                             print(f"Error decoding JSON: {data}")
+
+    def get_default_settings(self):
+        return OpenRouterSettings()
 
 
 class LlamaAgentProvider(ChatAPI):
@@ -232,23 +243,27 @@ class LlamaAgentProvider(ChatAPI):
 
         self.structured_settings = LlmStructuredOutputSettings(output_type=LlmStructuredOutputType.no_structured_output)
 
-    def get_response(self, messages: List[Dict[str, str]]) -> str:
+    def get_response(self, messages: List[Dict[str, str]], settings=None) -> str:
         # prompt, _ = self.main_message_formatter.format_conversation(messages=messages, response_role=Roles.assistant)
         self.settings.stream = False
         #self.settings.add_additional_stop_sequences(self.main_message_formatter.default_stop_sequences)
         #if self.debug_output:
-            #print(prompt)
-        return self.provider.create_chat_completion(messages, self.structured_settings, self.settings)['choices'][0][
+        #print(prompt)
+        return self.provider.create_chat_completion(messages, self.structured_settings,
+                                                    self.settings if settings is None else settings)['choices'][0][
             'text']
 
-    def get_streaming_response(self, messages: List[Dict[str, str]]) -> Generator[str, None, None]:
+    def get_streaming_response(self, messages: List[Dict[str, str]], settings=None) -> Generator[str, None, None]:
         #prompt, _ = self.main_message_formatter.format_conversation(messages=messages, response_role=Roles.assistant)
         self.settings.stream = True
         #self.settings.add_additional_stop_sequences(self.main_message_formatter.default_stop_sequences)
         #if self.debug_output:
         #    print(prompt)
-        for tok in self.provider.create_chat_completion(messages, self.structured_settings, self.settings):
+        for tok in self.provider.create_chat_completion(messages, self.structured_settings,
+                                                        self.settings if settings is None else settings):
             if "content" in tok['choices'][0]['delta']:
                 text = tok['choices'][0]['delta']['content']
                 yield text
 
+    def get_default_settings(self):
+        return self.provider.get_provider_default_settings()

@@ -1,8 +1,4 @@
-import os
-from dotenv import load_dotenv
 from virtual_game_master import VirtualGameMasterConfig, VirtualGameMaster, VirtualGameMasterChatAPISelector
-
-load_dotenv()
 
 
 def display_recent_messages(app: VirtualGameMaster, num_messages: int = 4):
@@ -34,6 +30,7 @@ def run_cli(app: VirtualGameMaster):
         if should_exit:
             break
 
+        print(f"\n\n", flush=True)
         if isinstance(response_generator, str):
             print(f"Game Master: {response_generator}\n")
         else:
@@ -46,8 +43,8 @@ def run_cli(app: VirtualGameMaster):
 # Usage
 if __name__ == "__main__":
     config = VirtualGameMasterConfig()
-    config.GAME_SAVE_FOLDER = "chat_history/new_game4242"
+    config.GAME_SAVE_FOLDER = "chat_history/new_game"
     api_selector = VirtualGameMasterChatAPISelector(config)
     api = api_selector.get_api()
-    app = VirtualGameMaster(config, api, False)
+    app = VirtualGameMaster(config, api, True)
     run_cli(app)
