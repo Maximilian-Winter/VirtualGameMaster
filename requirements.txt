@@ -3,3 +3,4 @@ llama_cpp_agent
 requests
 PyYAML
 python-dotenv
+fastapi
