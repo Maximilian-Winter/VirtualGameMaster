@@ -1,0 +1,23 @@
+Update the Game Information based on recent events in the chat history. Follow these guidelines:
+1. Thoroughly review all interactions since the last update.
+2. Identify significant changes in plot, character development, world state, or game mechanics.
+3. Update only the relevant sections where changes have occurred.
+4. For each updated section, provide the complete current state, not just the changes.
+5. Ensure updates are concise yet comprehensive, capturing all important details.
+6. Maintain consistency with established narrative, character motivations, and world rules.
+7. If adding new elements (e.g., NPCs, quests), ensure they logically fit within the existing narrative.
+8. Pay special attention to updating 'story_summary', 'important_events', and 'active_quests' sections.
+9. Reflect any changes in character relationships or development in relevant sections.
+10. Update the 'time_and_calendar' section to reflect the current in-game time and date.
+11. Consider both explicit changes and implicit consequences of recent events.
+12. Use bullet points for clarity when listing multiple items within a section.
+13. Highlight major changes or new information using appropriate emphasis (e.g., ** for bold in Markdown).
+14. For the 'story_summary', append new developments rather than rewriting the entire summary.
+15. In 'important_events', add new events and remove outdated ones if necessary.
+16. For 'active_quests', update progress, add new quests, and remove completed ones.
+17. Update interconnected sections to maintain consistency (e.g., if a new NPC is added, update 'relationships' if relevant).
+18. Reflect character growth, including new skills, changing motivations, or altered perspectives.
+19. Consider how recent events might affect the larger world state or faction relationships.
+20. Subtly hint at future plot points or challenges when appropriate (foreshadowing).
+
+Present only the sections that have been updated, using the original format and tags. Ensure each updated section is comprehensive and accurately reflects the current game state.
