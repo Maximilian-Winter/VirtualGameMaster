@@ -1,7 +1,10 @@
+import os
+from dotenv import load_dotenv
 from llama_cpp_agent import MessagesFormatterType
 from virtual_game_master import VirtualGameMasterConfig, VirtualGameMaster
 from chat_api import LlamaAgentProvider, OpenAIChatAPI, OpenRouterAPIPromptMode
 
+load_dotenv()
 
 def display_recent_messages(app: VirtualGameMaster, num_messages: int = 4):
     recent_messages = app.history.messages[-num_messages:]
@@ -39,17 +42,23 @@ def run_cli(app: VirtualGameMaster):
                 print(tok, end="", flush=True)
             print("\n")
 
+class VirtualGameMasterConfig:
+    def __init__(self):
+        self.GAME_SAVE_FOLDER = os.getenv("GAME_SAVE_FOLDER")
+        self.API_KEY = os.getenv("API_KEY")
+        self.MODEL = os.getenv("MODEL")
+        # other configuration variables
+
 # Usage
 if __name__ == "__main__":
     config = VirtualGameMasterConfig()
+    api_url = os.getenv("API_URL")
     config.GAME_SAVE_FOLDER = "NewDawnLlama/test2"
-    # api = OpenAIChatAPI(config.API_KEY, "https://openrouter.ai/api/v1", config.MODEL)
-    # api = LlamaAgentProvider("http://localhost:8080", None)
-    api = OpenRouterAPIPromptMode(config.API_KEY, config.MODEL)
-    api.settings.temperature = 0.78
-    api.settings.top_p = 0.92
-    api.settings.top_k = 50
-    api.settings.min_p = 0.05
-    api.settings.tfs_z = 0.95
+    api = OpenAIChatAPI(config.API_KEY, api_url, config.MODEL)
+    api.settings.temperature = float(os.getenv("TEMPERATURE"))
+    api.settings.top_p = float(os.getenv("TOP_P"))
+    api.settings.top_k = int(os.getenv("TOP_K"))
+    api.settings.min_p = float(os.getenv("MIN_P"))
+    api.settings.tfs_z = float(os.getenv("TFS_Z"))
     app = VirtualGameMaster(config, api, True)
     run_cli(app)
