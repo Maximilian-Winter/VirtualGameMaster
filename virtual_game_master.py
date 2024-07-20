@@ -158,7 +158,9 @@ class VirtualGameMaster:
 
         history.append({"role": "user", "content": self.reminder_message.strip()})
 
-        response = self.api.get_response(history)
+        settings = self.api.get_default_settings()
+        settings.temperature = 0.3
+        response = self.api.get_response(history, settings)
 
         if self.debug_mode:
             print(f"Update game info:\n{response}")
