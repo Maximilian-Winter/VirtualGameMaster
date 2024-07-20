@@ -12,7 +12,6 @@ from contextlib import asynccontextmanager
 from virtual_game_master import VirtualGameMasterConfig, VirtualGameMaster, VirtualGameMasterChatAPISelector
 
 
-
 @dataclasses.dataclass
 class State:
     rpg_app: VirtualGameMaster

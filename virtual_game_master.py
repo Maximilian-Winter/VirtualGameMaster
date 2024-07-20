@@ -33,7 +33,7 @@ class VirtualGameMasterConfig:
         self.SAVE_SYSTEM_MESSAGE_FILE = os.getenv("SAVE_SYSTEM_MESSAGE_FILE")
         self.SAVE_REMINDER_MESSAGE_FILE = os.getenv("SAVE_REMINDER_MESSAGE_FILE")
         self.API_TYPE = os.getenv("API_TYPE", "openai").lower()
-        self.API_KEY = os.getenv("API_KEY")
+        self.API_KEY = os.getenv("API_KEY", None)
         self.API_URL = os.getenv("API_URL")
         self.MODEL = os.getenv("MODEL")
         self.TEMPERATURE = float(os.getenv("TEMPERATURE", 0.7))
@@ -61,7 +61,7 @@ class VirtualGameMasterChatAPISelector:
             api.settings.min_p = self.config.MIN_P
             return api
         elif self.config.API_TYPE == "llamacpp":
-            api = LlamaAgentProvider(self.config.API_URL)
+            api = LlamaAgentProvider(self.config.API_URL, self.config.API_KEY)
             api.settings.temperature = self.config.TEMPERATURE
             api.settings.top_p = self.config.TOP_P
             api.settings.top_k = self.config.TOP_K

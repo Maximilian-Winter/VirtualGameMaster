@@ -248,6 +248,7 @@ class LlamaAgentProvider(ChatAPI):
         #if self.debug_output:
         #    print(prompt)
         for tok in self.provider.create_chat_completion(messages, self.structured_settings, self.settings):
-            text = tok['choices'][0]['text']
-            yield text
+            if "content" in tok['choices'][0]['delta']:
+                text = tok['choices'][0]['delta']['content']
+                yield text
 

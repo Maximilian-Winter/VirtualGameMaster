@@ -4,11 +4,13 @@ from virtual_game_master import VirtualGameMasterConfig, VirtualGameMaster, Virt
 
 load_dotenv()
 
+
 def display_recent_messages(app: VirtualGameMaster, num_messages: int = 4):
     recent_messages = app.history.messages[-num_messages:]
     for message in recent_messages:
         role = "Game Master" if message.role == "assistant" else "You"
         print(f"{role}: {message.content}\n")
+
 
 def run_cli(app: VirtualGameMaster):
     app.load()
@@ -44,7 +46,7 @@ def run_cli(app: VirtualGameMaster):
 # Usage
 if __name__ == "__main__":
     config = VirtualGameMasterConfig()
-    config.GAME_SAVE_FOLDER = "chat_history/new_game"
+    config.GAME_SAVE_FOLDER = "chat_history/new_game4242"
     api_selector = VirtualGameMasterChatAPISelector(config)
     api = api_selector.get_api()
     app = VirtualGameMaster(config, api, False)
