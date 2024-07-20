@@ -1,8 +1,7 @@
 import os
 from dotenv import load_dotenv
 from llama_cpp_agent import MessagesFormatterType
-from virtual_game_master import VirtualGameMasterConfig, VirtualGameMaster
-from chat_api import LlamaAgentProvider, OpenAIChatAPI, OpenRouterAPIPromptMode, VirtualGameMasterChatAPISelector
+from virtual_game_master import VirtualGameMasterConfig, VirtualGameMaster, VirtualGameMasterChatAPISelector
 
 load_dotenv()
 
