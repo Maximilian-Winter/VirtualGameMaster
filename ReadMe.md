@@ -50,15 +50,23 @@ Virtual Game Master is an open-source project that leverages Large Language Mode
 
 ### Configuration
 
-The `.env` file contains important configuration settings for the Virtual Game Master. Here's an explanation of key settings:
+The `.env` file contains important configuration settings for the Virtual Game Master. Here's an explanation of each setting:
 
-- `API_TYPE`: Choose between "openai", "openrouter", or "llamacpp"
-- `API_KEY`: Your API key for the chosen service
-- `API_URL`: The endpoint URL for the API (including the llama.cpp server address)
-- `MODEL`: The specific model to use
-- `TEMPERATURE`, `TOP_P`, `TOP_K`, `MIN_P`, `TFS_Z`: Model parameters
-
-Adjust these settings according to your chosen LLM backend and preferences.
+- `GAME_SAVE_FOLDER`: Directory where game saves are stored
+- `INITIAL_GAME_STATE`: Path to the YAML file containing the initial game state
+- `MAX_MESSAGES`: Maximum number of messages to keep in memory
+- `KEPT_MESSAGES`: Number of messages to keep after a save state generation
+- `SYSTEM_MESSAGE_FILE`: Path to the system message prompt file
+- `SAVE_SYSTEM_MESSAGE_FILE`: Path to the save system message prompt file
+- `SAVE_REMINDER_MESSAGE_FILE`: Path to the save reminder message file
+- `API_KEY`: Your API key for the LLM service
+- `API_URL`: The endpoint URL for the LLM API
+- `MODEL`: The specific model to use (e.g., "microsoft/wizardlm-2-8x22b")
+- `TEMPERATURE`: Controls randomness in output (0.0 to 1.0)
+- `TOP_P`: Nucleus sampling parameter (0.0 to 1.0)
+- `TOP_K`: Limits vocabulary for each generation step
+- `MIN_P`: Minimum probability for token consideration
+- `TFS_Z`: Tail free sampling parameter
 
 ### Usage
 
