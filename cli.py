@@ -47,7 +47,12 @@ class VirtualGameMasterConfig:
         self.GAME_SAVE_FOLDER = os.getenv("GAME_SAVE_FOLDER")
         self.API_KEY = os.getenv("API_KEY")
         self.MODEL = os.getenv("MODEL")
-        # other configuration variables
+        self.SYSTEM_MESSAGE_FILE = os.getenv("SYSTEM_MESSAGE_FILE")
+        self.SAVE_SYSTEM_MESSAGE_FILE = os.getenv("SAVE_SYSTEM_MESSAGE_FILE")
+        self.SAVE_REMINDER_MESSAGE_FILE = os.getenv("SAVE_REMINDER_MESSAGE_FILE")
+        self.INITIAL_GAME_STATE = os.getenv("INITIAL_GAME_STATE")
+        self.MAX_MESSAGES = os.getenv("MAX_MESSAGES")
+        self.KEPT_MESSAGES = os.getenv("KEPT_MESSAGES")
 
 # Usage
 if __name__ == "__main__":
