@@ -46,13 +46,13 @@ def run_cli(app: VirtualGameMaster):
 # Usage
 if __name__ == "__main__":
     config = VirtualGameMasterConfig()
-    api_url = os.getenv("API_URL")
-    config.GAME_SAVE_FOLDER = "NewDawnLlama/test2"
-    api = OpenAIChatAPI(config.API_KEY, api_url, config.MODEL)
-    api.settings.temperature = float(os.getenv("TEMPERATURE"))
-    api.settings.top_p = float(os.getenv("TOP_P"))
-    api.settings.top_k = int(os.getenv("TOP_K"))
-    api.settings.min_p = float(os.getenv("MIN_P"))
-    api.settings.tfs_z = float(os.getenv("TFS_Z"))
-    app = VirtualGameMaster(config, api, True)
+    config.GAME_SAVE_FOLDER = "chat_history/new_game"
+    api = OpenAIChatAPI(config.API_KEY, config.API_URL, config.MODEL)
+    api.settings.temperature = config.TEMPERATURE
+    api.settings.top_p = config.TOP_P
+    # Not available when using OpenAI client
+    # api.settings.top_k = config.TOP_K
+    # api.settings.min_p = config.MIN_P
+    # api.settings.tfs_z = config.TFS_Z
+    app = VirtualGameMaster(config, api, False)
     run_cli(app)

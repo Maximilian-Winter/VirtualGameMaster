@@ -23,12 +23,14 @@ class State:
 async def lifespan(app: FastAPI):
     # Startup
     config = VirtualGameMasterConfig()
-    config.GAME_SAVE_FOLDER = "new_temp"
-    api = OpenAIChatAPI(config.API_KEY, "https://openrouter.ai/api/v1", config.MODEL)
-    # api = LlamaAgentProvider("http://localhost:8080", MessagesFormatterType.LLAMA_3)
-    api.settings.temperature = 0.85
-    # api.settings.top_p = 0.85
-    # api.settings.top_k = 50
+    config.GAME_SAVE_FOLDER = "chat_history/new_game"
+    api = OpenAIChatAPI(config.API_KEY, config.API_URL, config.MODEL)
+    api.settings.temperature = config.TEMPERATURE
+    api.settings.top_p = config.TOP_P
+    # Not available when using OpenAI client
+    # api.settings.top_k = config.TOP_K
+    # api.settings.min_p = config.MIN_P
+    # api.settings.tfs_z = config.TFS_Z
     app.state = State(rpg_app=VirtualGameMaster(config, api))
     app.state.rpg_app.load()
     yield

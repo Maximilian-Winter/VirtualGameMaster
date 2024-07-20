@@ -23,14 +23,20 @@ load_dotenv()
 class VirtualGameMasterConfig:
     def __init__(self):
         self.GAME_SAVE_FOLDER = os.getenv("GAME_SAVE_FOLDER")
-        self.API_KEY = os.getenv("API_KEY")
-        self.MODEL = os.getenv("MODEL")
-        self.SYSTEM_MESSAGE_FILE = os.getenv("SYSTEM_MESSAGE_FILE")
-        self.SAVE_SYSTEM_MESSAGE_FILE = os.getenv("SAVE_SYSTEM_MESSAGE_FILE")
-        self.SAVE_REMINDER_MESSAGE_FILE = os.getenv("SAVE_REMINDER_MESSAGE_FILE")
         self.INITIAL_GAME_STATE = os.getenv("INITIAL_GAME_STATE")
         self.MAX_MESSAGES = int(os.getenv("MAX_MESSAGES"))
         self.KEPT_MESSAGES = int(os.getenv("KEPT_MESSAGES"))
+        self.SYSTEM_MESSAGE_FILE = os.getenv("SYSTEM_MESSAGE_FILE")
+        self.SAVE_SYSTEM_MESSAGE_FILE = os.getenv("SAVE_SYSTEM_MESSAGE_FILE")
+        self.SAVE_REMINDER_MESSAGE_FILE = os.getenv("SAVE_REMINDER_MESSAGE_FILE")
+        self.API_KEY = os.getenv("API_KEY")
+        self.API_URL = os.getenv("API_URL")
+        self.MODEL = os.getenv("MODEL")
+        self.TEMPERATURE = float(os.getenv("TEMPERATURE"))
+        self.TOP_P = float(os.getenv("TOP_P"))
+        self.TOP_K = int(os.getenv("TOP_K"))
+        self.MIN_P = float(os.getenv("MIN_P"))
+        self.TFS_Z = float(os.getenv("TFS_Z"))
 
 
 class VirtualGameMaster:
