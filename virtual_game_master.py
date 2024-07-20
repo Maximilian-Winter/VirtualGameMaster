@@ -10,7 +10,7 @@ from functools import wraps
 from dotenv import load_dotenv
 
 from message_template import MessageTemplate
-from chat_api import ChatAPI
+from chat_api import ChatAPI, LlamaAgentProvider, OpenRouterAPI, OpenAIChatAPI
 from chat_history import ChatHistory, Message
 from utilities import load_yaml_initial_game_state
 from command_system import CommandSystem
@@ -41,6 +41,35 @@ class VirtualGameMasterConfig:
         self.TOP_K = int(os.getenv("TOP_K", 0))
         self.MIN_P = float(os.getenv("MIN_P", 0.0))
         self.TFS_Z = float(os.getenv("TFS_Z", 1.0))
+
+
+class VirtualGameMasterChatAPISelector:
+    def __init__(self, config: VirtualGameMasterConfig):
+        self.config = config
+
+    def get_api(self) -> ChatAPI:
+        if self.config.API_TYPE == "openai":
+            api = OpenAIChatAPI(self.config.API_KEY, self.config.API_URL, self.config.MODEL)
+            api.settings.temperature = self.config.TEMPERATURE
+            api.settings.top_p = self.config.TOP_P
+            return api
+        elif self.config.API_TYPE == "openrouter":
+            api = OpenRouterAPI(self.config.API_KEY, self.config.MODEL)
+            api.settings.temperature = self.config.TEMPERATURE
+            api.settings.top_p = self.config.TOP_P
+            api.settings.top_k = self.config.TOP_K
+            api.settings.min_p = self.config.MIN_P
+            return api
+        elif self.config.API_TYPE == "llamacpp":
+            api = LlamaAgentProvider(self.config.API_URL)
+            api.settings.temperature = self.config.TEMPERATURE
+            api.settings.top_p = self.config.TOP_P
+            api.settings.top_k = self.config.TOP_K
+            api.settings.min_p = self.config.MIN_P
+            api.settings.tfs_z = self.config.TFS_Z
+            return api
+        else:
+            raise ValueError(f"Unsupported API type: {self.config.API_TYPE}")
 
 
 class VirtualGameMaster:

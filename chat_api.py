@@ -6,7 +6,7 @@ import requests
 
 from openai import OpenAI
 
-from VirtualGameMaster.virtual_game_master import VirtualGameMasterConfig
+
 from llama_cpp_agent.chat_history.messages import Roles
 from llama_cpp_agent.llm_output_settings import LlmStructuredOutputSettings, LlmStructuredOutputType
 from llama_cpp_agent.providers import LlamaCppServerProvider
@@ -212,70 +212,42 @@ class OpenRouterAPIPromptMode(ChatAPI):
 
 class LlamaAgentProvider(ChatAPI):
 
-    def __init__(self, server_ip: str, messages_formatter_type: MessagesFormatterType = None,
+    def __init__(self, server_ip: str, api_key: str, messages_formatter_type: MessagesFormatterType = None,
                  debug_output: bool = False):
-        self.provider = LlamaCppServerProvider(server_ip)
+        self.provider = LlamaCppServerProvider(server_ip, api_key=api_key)
         self.settings = self.provider.get_provider_default_settings()
 
         self.debug_output = debug_output
 
-        if messages_formatter_type:
-            self.main_message_formatter = get_predefined_messages_formatter(messages_formatter_type)
-        else:
-            prompt_markers = {
-                Roles.system: PromptMarkers("""### Instruction:\n""", """\n\n"""),
-                Roles.user: PromptMarkers("""### Player:\n""", """\n\n"""),
-                Roles.assistant: PromptMarkers("""### Game Master:\n""", """\n\n"""),
-                Roles.tool: PromptMarkers("""### Function Tool:\n""", """\n\n"""),
-            }
-            self.main_message_formatter = MessagesFormatter("", prompt_markers, False, ["### Player:"], False)
+        #if messages_formatter_type:
+        #    self.main_message_formatter = get_predefined_messages_formatter(messages_formatter_type)
+        #else:
+        #    prompt_markers = {
+        #        Roles.system: PromptMarkers("""### Instruction:\n""", """\n\n"""),
+        #        Roles.user: PromptMarkers("""### Player:\n""", """\n\n"""),
+        #        Roles.assistant: PromptMarkers("""### Game Master:\n""", """\n\n"""),
+        #        Roles.tool: PromptMarkers("""### Function Tool:\n""", """\n\n"""),
+        #    }
+        #    self.main_message_formatter = MessagesFormatter("", prompt_markers, False, ["### Player:"], False)
 
         self.structured_settings = LlmStructuredOutputSettings(output_type=LlmStructuredOutputType.no_structured_output)
 
     def get_response(self, messages: List[Dict[str, str]]) -> str:
-        prompt, _ = self.main_message_formatter.format_conversation(messages=messages, response_role=Roles.assistant)
+        # prompt, _ = self.main_message_formatter.format_conversation(messages=messages, response_role=Roles.assistant)
         self.settings.stream = False
-        self.settings.add_additional_stop_sequences(self.main_message_formatter.default_stop_sequences)
-        if self.debug_output:
-            print(prompt)
-        return self.provider.create_completion(prompt, self.structured_settings, self.settings, "")['choices'][0][
+        #self.settings.add_additional_stop_sequences(self.main_message_formatter.default_stop_sequences)
+        #if self.debug_output:
+            #print(prompt)
+        return self.provider.create_chat_completion(messages, self.structured_settings, self.settings)['choices'][0][
             'text']
 
     def get_streaming_response(self, messages: List[Dict[str, str]]) -> Generator[str, None, None]:
-        prompt, _ = self.main_message_formatter.format_conversation(messages=messages, response_role=Roles.assistant)
+        #prompt, _ = self.main_message_formatter.format_conversation(messages=messages, response_role=Roles.assistant)
         self.settings.stream = True
-        self.settings.add_additional_stop_sequences(self.main_message_formatter.default_stop_sequences)
-        if self.debug_output:
-            print(prompt)
-        for tok in self.provider.create_completion(prompt, self.structured_settings, self.settings, ""):
+        #self.settings.add_additional_stop_sequences(self.main_message_formatter.default_stop_sequences)
+        #if self.debug_output:
+        #    print(prompt)
+        for tok in self.provider.create_chat_completion(messages, self.structured_settings, self.settings):
             text = tok['choices'][0]['text']
             yield text
 
-
-class VirtualGameMasterChatAPISelector:
-    def __init__(self, config: VirtualGameMasterConfig):
-        self.config = config
-
-    def get_api(self) -> ChatAPI:
-        if self.config.API_TYPE == "openai":
-            api = OpenAIChatAPI(self.config.API_KEY, self.config.API_URL, self.config.MODEL)
-            api.settings.temperature = self.config.TEMPERATURE
-            api.settings.top_p = self.config.TOP_P
-            return api
-        elif self.config.API_TYPE == "openrouter":
-            api = OpenRouterAPI(self.config.API_KEY, self.config.MODEL)
-            api.settings.temperature = self.config.TEMPERATURE
-            api.settings.top_p = self.config.TOP_P
-            api.settings.top_k = self.config.TOP_K
-            api.settings.min_p = self.config.MIN_P
-            return api
-        elif self.config.API_TYPE == "llamacpp":
-            api = LlamaAgentProvider(self.config.API_URL)
-            api.settings.temperature = self.config.TEMPERATURE
-            api.settings.top_p = self.config.TOP_P
-            api.settings.top_k = self.config.TOP_K
-            api.settings.min_p = self.config.MIN_P
-            api.settings.tfs_z = self.config.TFS_Z
-            return api
-        else:
-            raise ValueError(f"Unsupported API type: {self.config.API_TYPE}")
