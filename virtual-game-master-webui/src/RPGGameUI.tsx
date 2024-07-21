@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Send, Save, ChevronLeft, ChevronRight, Edit2, Check } from 'lucide-react';
+import {Send, Save, ChevronLeft, ChevronRight, Edit2, Check, Menu} from 'lucide-react';
 import ChatMessage from './ChatMessage';
 import useWebSocket from './useWebSocket';
 
@@ -178,19 +178,33 @@ const RPGGameUI: React.FC = () => {
 
   return (
       <div className="bg-[#0d1117] min-h-screen text-gray-300 flex flex-col">
-        <header className="bg-[#161b22] p-4 shadow-md z-30 relative">
+        <header className="bg-[#161b22] p-4 shadow-md z-30 relative flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-100">Virtual-Game-Master</h1>
+          <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="lg:hidden bg-[#1c2128] hover:bg-[#2d333b] text-gray-300 p-2 rounded-full transition-colors"
+              aria-label="Toggle sidebar"
+          >
+            <Menu size={20} />
+          </button>
         </header>
 
         <main className="flex-grow flex overflow-hidden relative">
           {/* Sidebar */}
           <aside
               className={`bg-[#161b22] transition-all duration-300 ease-in-out ${
-                  isSidebarOpen ? 'w-80 lg:w-96 xl:w-[480px] 2xl:w-[640px]' : 'w-0'
-              } overflow-hidden flex flex-col absolute left-0 top-0 bottom-0 z-20 h-full`}
+                  isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+              } lg:translate-x-0 w-80 lg:w-96 xl:w-[480px] overflow-hidden flex flex-col fixed lg:relative left-0 top-0 bottom-0 z-20 h-full`}
           >
             <div className="p-4 border-b border-gray-700 flex justify-between items-center">
-              <h2 className="text-xl pr-8 font-semibold text-gray-100">Game Information</h2>
+              <h2 className="text-xl font-semibold text-gray-100">Game Information</h2>
+              <button
+                  onClick={() => setIsSidebarOpen(false)}
+                  className="lg:hidden text-gray-400 hover:text-gray-200"
+                  aria-label="Close sidebar"
+              >
+                <ChevronLeft size={20}/>
+              </button>
             </div>
             <div className="flex-grow overflow-y-auto p-4 space-y-4">
               {Object.entries(gameInfo).map(([key, value]) => (
@@ -201,8 +215,9 @@ const RPGGameUI: React.FC = () => {
                           <button
                               onClick={() => handleEditGameInfoField(key)}
                               className="text-gray-400 hover:text-gray-200 transition-colors"
+                              aria-label={`Edit ${key}`}
                           >
-                            <Edit2 size={16} />
+                            <Edit2 size={16}/>
                           </button>
                       )}
                     </div>
@@ -217,14 +232,13 @@ const RPGGameUI: React.FC = () => {
                           <button
                               onClick={() => handleSaveEditedGameInfoField(key)}
                               className="ml-2 bg-green-500 hover:bg-green-600 text-white p-2 rounded-lg transition-colors"
+                              aria-label={`Save ${key}`}
                           >
-                            <Check size={16} />
+                            <Check size={16}/>
                           </button>
                         </div>
                     ) : (
-                        <pre className="text-gray-400 whitespace-pre-wrap break-words">
-                    {value}
-                  </pre>
+                        <pre className="text-gray-400 whitespace-pre-wrap break-words">{value}</pre>
                     )}
                   </div>
               ))}
@@ -234,7 +248,7 @@ const RPGGameUI: React.FC = () => {
                   onClick={handleSaveGame}
                   className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition-colors flex items-center justify-center"
               >
-                <Save size={18} className="mr-2" />
+                <Save size={18} className="mr-2"/>
                 Save Game
               </button>
             </div>
@@ -242,18 +256,8 @@ const RPGGameUI: React.FC = () => {
 
           {/* Chat Section */}
           <section className="flex-grow flex flex-col bg-[#0d1117] overflow-hidden relative w-full h-full">
-            {/* Sidebar Toggle Button */}
-            <div className="absolute top-4 left-4 z-30">
-              <button
-                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                  className="bg-[#1c2128] hover:bg-[#2d333b] text-gray-300 p-2 rounded-full transition-colors"
-              >
-                {isSidebarOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
-              </button>
-            </div>
-
             {/* Chat History Window */}
-            <div className="flex-grow overflow-hidden p-4 mt-16 mb-24">
+            <div className="flex-grow overflow-hidden p-4 pb-24">
               <div
                   ref={chatContainerRef}
                   className="h-full overflow-y-auto bg-[#1c2128] rounded-lg border border-gray-700 p-4"
@@ -297,7 +301,7 @@ const RPGGameUI: React.FC = () => {
                     value={userInput}
                     onChange={(e) => setUserInput(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    className="flex-grow bg-transparent p-3 focus:outline-none text-gray-200 resize-none min-h-[50px] max-h-[75px] overflow-y-auto"
+                    className="flex-grow bg-transparent p-3 focus:outline-none text-gray-200 resize-none min-h-[50px] max-h-[150px] overflow-y-auto"
                     placeholder="Enter your message... (Shift+Enter for new line)"
                     rows={1}
                     disabled={isGenerating || !isConnected}
