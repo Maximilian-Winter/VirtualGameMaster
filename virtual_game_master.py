@@ -2,6 +2,8 @@ import datetime
 import json
 import os
 import re
+from xml.etree import ElementTree as ET
+from io import StringIO
 
 from typing import Tuple, Generator
 
@@ -156,8 +158,8 @@ class VirtualGameMaster:
 
         template = "{role}: {content}\n\n"
         role_names = {
-            "assistant": "Player",
-            "user": "Game Master"
+            "assistant": "Game Master",
+            "user": "Player"
         }
         formatter = ChatFormatter(template, role_names)
         formatted_chat = formatter.format_messages(history)
@@ -166,7 +168,7 @@ class VirtualGameMaster:
 
         print(prompt)
         settings = self.api.get_default_settings()
-        settings.temperature = 0.3
+        settings.temperature = 0.65
         settings.top_p = 1.0
         settings.top_k = 0
         settings.min_p = 0.0
@@ -190,9 +192,34 @@ class VirtualGameMaster:
         self.save()
 
     def update_template_fields(self, save_state: str):
-        sections = re.findall(r'<(\w+)>(.*?)</\1>', save_state, re.DOTALL)
-        for section, content in sections:
-            self.template_fields[section] = content.strip()
+        # Wrap the save_state in a root element to ensure valid XML
+        xml_string = f"<root>{save_state}</root>"
+
+        try:
+            # Parse the XML string
+            root = ET.fromstring(xml_string)
+
+            # Function to recursively process elements
+            def process_element(element):
+                for child in element:
+                    if len(child) == 0:  # If the element has no children
+                        # Use only the last part of the tag as the key
+                        key = child.tag.split('.')[-1]
+                        self.template_fields[key] = child.text.strip() if child.text else ""
+                    else:
+                        # Recursively process nested elements
+                        process_element(child)
+
+            # Start processing from the root
+            process_element(root)
+
+        except ET.ParseError:
+            # Fallback to the original regex method if XML parsing fails
+            sections = re.findall(r'<([\w.]+)>(.*?)</\1>', save_state, re.DOTALL)
+            for section, content in sections:
+                # Use only the last part of the section name as the key
+                key = section.split('.')[-1]
+                self.template_fields[key] = content.strip()
 
     def save(self):
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
