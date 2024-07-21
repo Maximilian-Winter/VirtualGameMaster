@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Send, Save, ChevronLeft, ChevronRight, Edit2, Check, Copy } from 'lucide-react';
+import { Send, Save, ChevronLeft, ChevronRight, Edit2, Check } from 'lucide-react';
+import ChatMessage from './ChatMessage';
+import useWebSocket from './useWebSocket';
 
 interface GameInfo {
   [key: string]: string;
@@ -20,95 +22,54 @@ const RPGGameUI: React.FC = () => {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [userInput, setUserInput] = useState<string>('');
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
-  const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
-  const [editedContent, setEditedContent] = useState<string>('');
   const [editingGameInfoField, setEditingGameInfoField] = useState<string | null>(null);
   const [editedGameInfoContent, setEditedGameInfoContent] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const [wsConnected, setWsConnected] = useState<boolean>(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  const editTextareaRef = useRef<HTMLTextAreaElement>(null);
-  const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const initWebSocket = useCallback(() => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      console.log('WebSocket already connected');
-      return;
-    }
+  const handleWebSocketMessage = useCallback((data: any) => {
+    if (data.type === 'chunk') {
+      setChatHistory(prevHistory => {
+        const updatedHistory = [...prevHistory];
+        const lastMessage = updatedHistory[updatedHistory.length - 1];
 
-    wsRef.current = new WebSocket(WS_URL);
-
-    wsRef.current.onopen = () => {
-      console.log('WebSocket connection established');
-      setWsConnected(true);
-    };
-
-    wsRef.current.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === 'chunk') {
-        setChatHistory(prevHistory => {
-          const updatedHistory = [...prevHistory];
-          const lastMessage = updatedHistory[updatedHistory.length - 1];
-
-          if (lastMessage && lastMessage.role === 'assistant') {
-            return updatedHistory.map((msg, index) =>
-                index === updatedHistory.length - 1
-                    ? { ...msg, content: msg.content + data.content }
-                    : msg
-            );
-          } else {
-            return [
-              ...updatedHistory,
-              {
-                id: prevHistory.length,
-                role: 'assistant',
-                content: data.content,
-                timestamp: new Date().toLocaleString(),
-              }
-            ];
-          }
-        });
-      } else if (data.type === 'end') {
-        setIsGenerating(false);
-        if (data.should_exit) {
-          // Handle game exit if needed
+        if (lastMessage && lastMessage.role === 'assistant') {
+          return updatedHistory.map((msg, index) =>
+              index === updatedHistory.length - 1
+                  ? { ...msg, content: msg.content + data.content }
+                  : msg
+          );
+        } else {
+          return [
+            ...updatedHistory,
+            {
+              id: prevHistory.length,
+              role: 'assistant',
+              content: data.content,
+              timestamp: new Date().toLocaleString(),
+            }
+          ];
         }
+      });
+    } else if (data.type === 'end') {
+      setIsGenerating(false);
+      if (data.should_exit) {
+        // Handle game exit if needed
       }
-    };
-
-    wsRef.current.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      setWsConnected(false);
-    };
-
-    wsRef.current.onclose = () => {
-      console.log('WebSocket connection closed');
-      setWsConnected(false);
-      // Attempt to reconnect after a delay
-      reconnectTimeoutRef.current = setTimeout(() => {
-        console.log('Attempting to reconnect...');
-        initWebSocket();
-      }, 5000);
-    };
+    }
   }, []);
+
+  const { isConnected, sendMessage } = useWebSocket({
+    url: WS_URL,
+    onMessage: handleWebSocketMessage,
+  });
 
   useEffect(() => {
     fetchGameInfo();
     fetchChatHistory();
-    initWebSocket();
-
-    return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
-    };
-  }, [initWebSocket]);
+  }, []);
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -122,16 +83,6 @@ const RPGGameUI: React.FC = () => {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
   }, [chatHistory]);
-
-  useEffect(() => {
-    if (editTextareaRef.current && editingMessageId !== null) {
-      const message = chatHistory.find(msg => msg.id === editingMessageId);
-      if (message) {
-        editTextareaRef.current.style.height = 'auto';
-        editTextareaRef.current.style.height = `${editTextareaRef.current.scrollHeight}px`;
-      }
-    }
-  }, [editingMessageId, chatHistory]);
 
   const fetchGameInfo = async (): Promise<void> => {
     try {
@@ -154,7 +105,7 @@ const RPGGameUI: React.FC = () => {
   };
 
   const handleSendMessage = () => {
-    if (!userInput.trim() || isGenerating || !wsConnected) return;
+    if (!userInput.trim() || isGenerating || !isConnected) return;
 
     const newUserMessage: ChatMessage = {
       id: chatHistory.length,
@@ -166,13 +117,7 @@ const RPGGameUI: React.FC = () => {
     setUserInput('');
     setIsGenerating(true);
 
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ content: userInput }));
-    } else {
-      console.error('WebSocket is not connected');
-      setIsGenerating(false);
-      initWebSocket();
-    }
+    sendMessage(userInput);
   };
 
   const handleSaveGame = async (): Promise<void> => {
@@ -192,26 +137,16 @@ const RPGGameUI: React.FC = () => {
     }
   };
 
-  const handleEditMessage = (id: number) => {
-    const messageToEdit = chatHistory.find(msg => msg.id === id);
-    if (messageToEdit) {
-      setEditingMessageId(id);
-      setEditedContent(messageToEdit.content);
-    }
-  };
-
-  const handleSaveEditedMessage = async (id: number) => {
+  const handleEditMessage = async (id: number, content: string) => {
     try {
       const response = await fetch(`${BACKEND_URL}/api/edit_message`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, content: editedContent }),
+        body: JSON.stringify({ id, content }),
       });
       const data = await response.json();
       if (data.status === 'success') {
-        setChatHistory(chatHistory.map(msg => msg.id === id ? { ...msg, content: editedContent } : msg));
-        setEditingMessageId(null);
-        setEditedContent('');
+        setChatHistory(chatHistory.map(msg => msg.id === id ? { ...msg, content } : msg));
       }
     } catch (error) {
       console.error('Failed to save edited message:', error);
@@ -238,14 +173,6 @@ const RPGGameUI: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to save edited game info field:', error);
-    }
-  };
-
-  const copyToClipboard = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch (err) {
-      console.error('Failed to copy text to clipboard:', err);
     }
   };
 
@@ -281,12 +208,12 @@ const RPGGameUI: React.FC = () => {
                     </div>
                     {editingGameInfoField === key ? (
                         <div className="flex items-center mt-2">
-                  <textarea
-                      value={editedGameInfoContent}
-                      onChange={(e) => setEditedGameInfoContent(e.target.value)}
-                      className="flex-grow bg-[#0d1117] p-2 rounded-lg text-gray-200 resize-none"
-                      rows={5}
-                  />
+                    <textarea
+                        value={editedGameInfoContent}
+                        onChange={(e) => setEditedGameInfoContent(e.target.value)}
+                        className="flex-grow bg-[#0d1117] p-2 rounded-lg text-gray-200 resize-none"
+                        rows={5}
+                    />
                           <button
                               onClick={() => handleSaveEditedGameInfoField(key)}
                               className="ml-2 bg-green-500 hover:bg-green-600 text-white p-2 rounded-lg transition-colors"
@@ -296,8 +223,8 @@ const RPGGameUI: React.FC = () => {
                         </div>
                     ) : (
                         <pre className="text-gray-400 whitespace-pre-wrap break-words">
-                  {value}
-                </pre>
+                    {value}
+                  </pre>
                     )}
                   </div>
               ))}
@@ -331,75 +258,14 @@ const RPGGameUI: React.FC = () => {
                   ref={chatContainerRef}
                   className="h-full overflow-y-auto bg-[#1c2128] rounded-lg border border-gray-700 p-4"
               >
-                {chatHistory.map((message) => (
-                    <div
+                {chatHistory.map((message, index) => (
+                    <ChatMessage
                         key={message.id}
-                        className={`flex gap-4 p-4 ${
-                            message.role === 'assistant' ? 'bg-[#2d333b]' : ''
-                        } rounded-lg mb-4`}
-                    >
-                      <img
-                          className="h-10 w-10 rounded-full flex-shrink-0"
-                          src={`https://dummyimage.com/256x256/354ea1/ffffff&text=${
-                              message.role === 'user' ? 'P' : 'GM'
-                          }`}
-                          alt={message.role === 'user' ? 'Player' : 'Game Master'}
-                      />
-                      <div className="flex flex-col flex-grow overflow-hidden">
-                        <div className="flex justify-between items-center mb-2">
-                          <div className="flex items-center gap-2">
-                      <span className="font-bold text-gray-200">
-                        {message.role === 'user' ? 'Player' : 'Game Master'}
-                      </span>
-                            <span className="text-xs text-gray-400">{message.timestamp}</span>
-                          </div>
-                          <div className="flex gap-2">
-                            <button
-                                className="text-gray-400 hover:text-blue-500"
-                                title="Copy"
-                                onClick={() => copyToClipboard(message.content)}
-                            >
-                              <Copy size={16} />
-                            </button>
-                            <button
-                                className="text-gray-400 hover:text-blue-500"
-                                title="Edit"
-                                onClick={() => handleEditMessage(message.id)}
-                            >
-                              <Edit2 size={16} />
-                            </button>
-                          </div>
-                        </div>
-                        {editingMessageId === message.id ? (
-                            <div className="flex items-center">
-                      <textarea
-                          ref={editTextareaRef}
-                          value={editedContent}
-                          onChange={(e) => setEditedContent(e.target.value)}
-                          className={`flex-grow p-2 rounded-lg text-gray-200 resize-none ${
-                              message.role === 'assistant'
-                                  ? 'bg-[#3a404b]'
-                                  : 'bg-[#2d333b]'
-                          }`}
-                          rows={3}
-                      />
-                              <button
-                                  onClick={() => handleSaveEditedMessage(message.id)}
-                                  className="ml-2 bg-green-500 hover:bg-green-600 text-white p-2 rounded-lg transition-colors"
-                              >
-                                <Check size={16}/>
-                              </button>
-                            </div>
-                        ) : (
-                            <div className="text-gray-200 whitespace-pre-wrap break-words overflow-auto">
-                              {message.content.trimStart()}
-                              {message.role === 'assistant' && message.id === chatHistory.length - 1 && isGenerating && (
-                                  <span className="animate-pulse">▋</span>
-                              )}
-                            </div>
-                        )}
-                      </div>
-                    </div>
+                        message={message}
+                        onEdit={handleEditMessage}
+                        isGenerating={isGenerating}
+                        isLastMessage={index === chatHistory.length - 1}
+                    />
                 ))}
                 {isGenerating && (!chatHistory.length || chatHistory[chatHistory.length - 1].role !== 'assistant') && (
                     <div className="flex gap-4 p-4 bg-[#2d333b] rounded-lg mb-4">
@@ -426,23 +292,23 @@ const RPGGameUI: React.FC = () => {
             <div className="fixed bottom-0 left-0 right-0 p-4 bg-[#0d1117] border-t border-gray-700">
               <div className="max-w-4xl mx-auto">
                 <div className="flex items-start gap-4 bg-[#1c2128] rounded-lg overflow-hidden p-2">
-              <textarea
-                  ref={textareaRef}
-                  value={userInput}
-                  onChange={(e) => setUserInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  className="flex-grow bg-transparent p-3 focus:outline-none text-gray-200 resize-none min-h-[50px] max-h-[75px] overflow-y-auto"
-                  placeholder="Enter your message... (Shift+Enter for new line)"
-                  rows={1}
-                  disabled={isGenerating || !wsConnected}
-              />
+                <textarea
+                    ref={textareaRef}
+                    value={userInput}
+                    onChange={(e) => setUserInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    className="flex-grow bg-transparent p-3 focus:outline-none text-gray-200 resize-none min-h-[50px] max-h-[75px] overflow-y-auto"
+                    placeholder="Enter your message... (Shift+Enter for new line)"
+                    rows={1}
+                    disabled={isGenerating || !isConnected}
+                />
                   <button
                       onClick={handleSendMessage}
                       className={`text-gray-400 hover:text-blue-500 p-3 mt-1 ${
-                          isGenerating || !wsConnected ? 'opacity-50 cursor-not-allowed' : ''
+                          isGenerating || !isConnected ? 'opacity-50 cursor-not-allowed' : ''
                       }`}
                       title="Send"
-                      disabled={isGenerating || !wsConnected}
+                      disabled={isGenerating || !isConnected}
                   >
                     <Send size={24} />
                   </button>

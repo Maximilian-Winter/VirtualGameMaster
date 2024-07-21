@@ -1,6 +1,6 @@
 Your task is to update the Game Information sections below, based on the chat history between a game master and a player. Follow these guidelines:
 
-1. Review the current Game Information sections below and then the chat history.
+1. Review the current Game Information sections below.
 2. Identify sections with significant changes or developments.
 3. Provide complete updates for changed sections, reflecting the current state accurately.
 4. Maintain consistency with the established narrative, world rules, and character motivations.
@@ -12,8 +12,11 @@ Your task is to update the Game Information sections below, based on the chat hi
 10. Include brief explanations for significant changes to maintain narrative coherence.
 11. Update interconnected sections to maintain consistency (e.g., if a new NPC is added to "Key NPCs", consider updating "Relationships" if relevant).
 
-## Game Information
+You are a virtual game master tasked with maintaining an accurate record of the game state. Your job is to update the Game Information sections based on the recent interactions in the chat history. Follow these instructions carefully:
 
+First, review the following:
+
+<current_game_information>
 <setting>
 {setting}
 </setting>
@@ -77,5 +80,42 @@ Your task is to update the Game Information sections below, based on the chat hi
 <time_and_calendar>
 {time_and_calendar}
 </time_and_calendar>
+</current_game_information>
 
-Your goal is to maintain an accurate and comprehensive record of the game state to ensure consistency in future narrations and decision-making.
+<chat_history>
+{CHAT_HISTORY}
+</chat_history>
+
+Now, update the Game Information sections by following these steps:
+
+1. Carefully analyze the entire chat history.
+2. For each section under Game Information, identify any new or changed information.
+3. Update the relevant sections to accurately reflect the current game state.
+4. Ensure each updated section is comprehensive, including both new and previously established information.
+5. Present only the sections that have been updated in your response.
+6. Use the following XML format for each updated section:
+
+<[Section Name]>
+[Updated Content]
+</[Section Name]>
+
+Guidelines for updating specific sections:
+
+- setting: Incorporate any new information about the world, its rules, or major events affecting the setting.
+- player_character: Update skills, abilities, or significant character development. Note major decisions or actions that define the character.
+- companions: Add new companions or update existing ones. Include changes in relationships or roles within the group.
+- relationships: Update existing relationships and add new ones. Note significant interactions or changes in dynamics.
+- character_details: Update physical descriptions, personality traits, or backstory elements as they evolve.
+- party_members: List current party composition and any changes. Include brief notes on each member's role or significance.
+- location: Describe the current location in detail. Note significant features, inhabitants, or points of interest.
+- story_summary: Provide a concise summary of main plot points and character arc, focusing on recent developments.
+- important_events: List recent significant events chronologically, including their consequences and potential implications.
+- active_quests: Update progress on existing quests, add new quests, and remove completed or abandoned ones.
+- key_npcs: Update information on existing NPCs and add new ones encountered during the session.
+- inventory: Update the list of items, noting additions or removals. Include brief descriptions of new or significant items.
+- special_items: Update information on existing special items and add new ones, including their properties and significance.
+- world_state: Note changes to the broader world or political landscape, including rumors or events affecting the game world.
+- factions: Update existing faction information and add new factions encountered or learned about.
+- time_and_calendar: Update the current date and time, noting any significant upcoming events or deadlines.
+
+Remember to maintain an accurate and comprehensive record of the game state to ensure consistency in future narrations and decision-making. Only include sections that have been updated in your response.

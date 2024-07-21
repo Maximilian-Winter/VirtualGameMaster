@@ -8,8 +8,8 @@ from typing import Tuple, Generator
 from dotenv import load_dotenv
 
 from message_template import MessageTemplate
-from chat_api import ChatAPI, LlamaAgentProvider, OpenRouterAPI, OpenAIChatAPI
-from chat_history import ChatHistory, Message
+from chat_api import ChatAPI, LlamaAgentProvider, OpenRouterAPI, OpenAIChatAPI, LlamaAgentProviderCustom
+from chat_history import ChatHistory, Message, ChatFormatter
 from utilities import load_yaml_initial_game_state
 from command_system import CommandSystem
 import commands
@@ -153,11 +153,18 @@ class VirtualGameMaster:
 
     def generate_save_state(self):
         history = self.history.to_list()[self.history_offset:]
-        history.insert(0, {"role": "system",
-                           "content": self.save_system_message_template.generate_message_content(self.template_fields)})
 
-        history.append({"role": "user", "content": self.reminder_message.strip()})
+        template = "{role}: {content}\n\n"
+        role_names = {
+            "assistant": "User",
+            "user": "Assistant"
+        }
+        formatter = ChatFormatter(template, role_names)
+        formatted_chat = formatter.format_messages(history)
 
+        prompt = self.save_system_message_template.generate_message_content(template_fields=self.template_fields, CHAT_HISTORY=formatted_chat)
+
+        print(prompt)
         settings = self.api.get_default_settings()
         settings.temperature = 0.3
         settings.top_p = 1.0
@@ -166,7 +173,8 @@ class VirtualGameMaster:
         settings.tfs_z = 1.0
 
         settings.n_predict = 8192
-        response_gen = self.api.get_streaming_response(history, settings)
+        prompt_message = {"role": "user", "content": prompt}
+        response_gen = self.api.get_streaming_response([prompt_message], settings)
 
         full_response = ""
         for response_chunk in response_gen:

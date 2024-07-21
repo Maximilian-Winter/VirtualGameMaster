@@ -99,9 +99,9 @@ class OpenRouterAPI(ChatAPI):
             "min_p": self.settings.min_p if settings is None else settings.min_p,
             "top_a": self.settings.top_a if settings is None else settings.top_a,
         }
-        if self.settings.seed is not None or settings.seed is not None:
+        if self.settings.seed is not None or (settings is not None and settings.seed is not None):
             body["seed"] = self.settings.seed if settings is None else settings.seed
-        if self.settings.max_tokens is not None or settings.max_tokens is not None:
+        if self.settings.max_tokens is not None or (settings is not None and settings.max_tokens is not None):
             body["max_tokens"] = self.settings.max_tokens if settings is None else settings.max_tokens
         return body
 
@@ -177,9 +177,9 @@ class OpenRouterAPIPromptMode(ChatAPI):
             "min_p": self.settings.min_p if settings is None else settings.min_p,
             "top_a": self.settings.top_a if settings is None else settings.top_a,
         }
-        if self.settings.seed is not None or settings.seed is not None:
+        if self.settings.seed is not None or (settings is not None and settings.seed is not None):
             body["seed"] = self.settings.seed if settings is None else settings.seed
-        if self.settings.max_tokens is not None or settings.max_tokens is not None:
+        if self.settings.max_tokens is not None or (settings is not None and settings.max_tokens is not None):
             body["max_tokens"] = self.settings.max_tokens if settings is None else settings.max_tokens
         return body
 
@@ -187,7 +187,7 @@ class OpenRouterAPIPromptMode(ChatAPI):
         response = requests.post(
             url=self.base_url,
             headers={"Authorization": f"Bearer {self.api_key}"},
-            json=self._prepare_request_body(messages,settings=settings)
+            json=self._prepare_request_body(messages, settings=settings)
         )
         return response.json()['choices'][0]['text']
 
@@ -270,6 +270,61 @@ class LlamaAgentProvider(ChatAPI):
             if "content" in tok['choices'][0]['delta']:
                 text = tok['choices'][0]['delta']['content']
                 yield text
+
+    def get_default_settings(self):
+        return self.provider.get_provider_default_settings()
+
+
+class LlamaAgentProviderCustom(ChatAPI):
+
+    def __init__(self, server_ip: str, api_key: str, messages_formatter_type: MessagesFormatterType = None,
+                 debug_output: bool = True):
+        self.provider = LlamaCppServerProvider(server_ip, api_key=api_key)
+        self.settings = self.provider.get_provider_default_settings()
+
+        self.debug_output = debug_output
+        messages_formatter_type = MessagesFormatterType.MISTRAL
+        if messages_formatter_type:
+            self.main_message_formatter = get_predefined_messages_formatter(messages_formatter_type)
+        else:
+            prompt_markers = {
+                Roles.system: PromptMarkers("""### System Instructions:\n""", """\n\n"""),
+                Roles.user: PromptMarkers("""[INST] ### Player:\n""", """\n\n[/INST]"""),
+                Roles.assistant: PromptMarkers("""### Game Master:\n""", """\n\n</s>"""),
+                Roles.tool: PromptMarkers("""### Function Tool:\n""", """\n\n"""),
+            }
+            self.main_message_formatter = MessagesFormatter("", prompt_markers, False, ["### Player:"], False)
+
+        self.structured_settings = LlmStructuredOutputSettings(output_type=LlmStructuredOutputType.no_structured_output)
+
+    def get_response(self, messages: List[Dict[str, str]], settings=None) -> str:
+        prompt, _ = self.main_message_formatter.format_conversation(messages=messages, response_role=Roles.assistant)
+        self.settings.stream = False
+        if settings is not None:
+            settings.stream = False
+        self.settings.additional_stop_sequences = self.main_message_formatter.default_stop_sequences
+        if settings is not None:
+            settings.additional_stop_sequences = self.main_message_formatter.default_stop_sequences
+        if self.debug_output:
+            print(prompt)
+        response = self.provider.create_completion(prompt, self.structured_settings,
+                                                   self.settings if settings is None else settings, "<s>")
+        return response['choices'][0]['text']
+
+    def get_streaming_response(self, messages: List[Dict[str, str]], settings=None) -> Generator[str, None, None]:
+        prompt, _ = self.main_message_formatter.format_conversation(messages=messages, response_role=Roles.assistant)
+        self.settings.stream = True
+        if settings is not None:
+            settings.stream = True
+        self.settings.additional_stop_sequences = self.main_message_formatter.default_stop_sequences
+        if settings is not None:
+            settings.additional_stop_sequences = self.main_message_formatter.default_stop_sequences
+        if self.debug_output:
+            print(prompt)
+        for tok in self.provider.create_completion(prompt, self.structured_settings,
+                                                   self.settings if settings is None else settings, "<s>"):
+            text = tok['choices'][0]['text']
+            yield text
 
     def get_default_settings(self):
         return self.provider.get_provider_default_settings()
