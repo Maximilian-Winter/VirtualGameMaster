@@ -30,7 +30,7 @@ def run_cli(app: VirtualGameMaster):
         if should_exit:
             break
 
-        print(f"\n\n", flush=True)
+        print(f"\n", flush=True)
         if isinstance(response_generator, str):
             print(f"Game Master: {response_generator}\n")
         else:
@@ -46,5 +46,5 @@ if __name__ == "__main__":
     config.GAME_SAVE_FOLDER = "chat_history/new_game42Wiz"
     api_selector = VirtualGameMasterChatAPISelector(config)
     api = api_selector.get_api()
-    app = VirtualGameMaster(config, api, True)
+    app = VirtualGameMaster(config, api, False)
     run_cli(app)

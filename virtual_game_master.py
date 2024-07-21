@@ -156,8 +156,8 @@ class VirtualGameMaster:
 
         template = "{role}: {content}\n\n"
         role_names = {
-            "assistant": "User",
-            "user": "Assistant"
+            "assistant": "Player",
+            "user": "Game Master"
         }
         formatter = ChatFormatter(template, role_names)
         formatted_chat = formatter.format_messages(history)
