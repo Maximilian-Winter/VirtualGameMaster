@@ -1,34 +1,38 @@
-Update the Game Information based on recent events in the chat history. Follow these guidelines:
-1. Thoroughly review all interactions since the last update.
-2. Identify significant changes in plot, character development, world state, or game mechanics.
-3. Update only the relevant sections where changes have occurred.
-4. For each updated section, provide the complete current state, not just the changes.
-5. Ensure updates are concise yet comprehensive, capturing all important details.
-6. Maintain consistency with established narrative, character motivations, and world rules.
-7. If adding new elements (e.g., NPCs, quests), ensure they logically fit within the existing narrative.
-8. Pay special attention to updating 'story_summary', 'important_events', and 'active_quests' sections.
-9. Reflect any changes in character relationships or development in relevant sections.
-10. Update the 'time_and_calendar' section to reflect the current in-game time and date.
-11. Consider both explicit changes and implicit consequences of recent events.
-12. Use bullet points for clarity when listing multiple items within a section.
-13. Highlight major changes or new information using appropriate emphasis (e.g., ** for bold in Markdown).
-14. For the 'story_summary', append new developments rather than rewriting the entire summary.
-15. In 'important_events', add new events and remove outdated ones if necessary.
-16. For 'active_quests', update progress, add new quests, and remove completed ones.
-17. Update interconnected sections to maintain consistency (e.g., if a new NPC is added, update 'relationships' if relevant).
-18. Reflect character growth, including new skills, changing motivations, or altered perspectives.
-19. Consider how recent events might affect the larger world state or faction relationships.
-20. Subtly hint at future plot points or challenges when appropriate (foreshadowing).
+Remember, your task is to update the Game Information sections above, based on the chat history you've just reviewed. Follow these steps:
 
-Ensure each updated section is comprehensive and accurately reflects the current game state. Present only the updated sections in your response, using the following format with xml-tags:
+1. Carefully analyze the entire chat history.
+2. For each section under Game Information above, identify any new or changed information.
+3. Update the relevant sections to accurately reflect the current game state.
+4. Ensure each updated section is comprehensive, including both new and previously established information.
+5. Present only the sections that have been updated in your response.
+6. Use the following XML format for each updated section:
 
 <section_name>
-Updated content
+Updated Content
 </section_name>
 
-Example output:
-
+For example:
 <location>
-New York City
+The party is currently in the ancient ruins of Azlant, exploring a dimly lit chamber filled with strange, glowing crystals. The air is thick with dust and the scent of long-forgotten magic.
 </location>
 
+Remember, your goal is to maintain an accurate and up-to-date record of the game state to ensure consistency in future narrations.
+
+Guidelines for updating specific sections:
+
+- setting: Incorporate any new information about the world, its rules, or major events affecting the setting.
+- player_character: Update skills, abilities, or significant character development. Note major decisions or actions that define the character.
+- companions: Add new companions or update existing ones. Include changes in relationships or roles within the group.
+- relationships: Update existing relationships and add new ones. Note significant interactions or changes in dynamics.
+- character_details: Update physical descriptions, personality traits, or backstory elements as they evolve.
+- party_members: List current party composition and any changes. Include brief notes on each member's role or significance.
+- location: Describe the current location in detail. Note significant features, inhabitants, or points of interest.
+- story_summary: Provide a concise summary of main plot points and character arc, focusing on recent developments.
+- important_events: List recent significant events chronologically, including their consequences and potential implications.
+- active_quests: Update progress on existing quests, add new quests, and remove completed or abandoned ones.
+- key_npcs: Update information on existing NPCs and add new ones encountered during the session.
+- inventory: Update the list of items, noting additions or removals. Include brief descriptions of new or significant items.
+- special_items: Update information on existing special items and add new ones, including their properties and significance.
+- world_state: Note changes to the broader world or political landscape, including rumors or events affecting the game world.
+- factions: Update existing faction information and add new factions encountered or learned about.
+- time_and_calendar: Update the current date and time, noting any significant upcoming events or deadlines.

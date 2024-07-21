@@ -89,6 +89,7 @@ class OpenRouterAPI(ChatAPI):
             "model": self.model,
             "messages": messages,
             "stream": stream,
+            "stop": ["</s>", "[INST]", "[/INST]"],
             "temperature": self.settings.temperature if settings is None else settings.temperature,
             "top_p": self.settings.top_p if settings is None else settings.top_p,
             "top_k": self.settings.top_k if settings is None else settings.top_k,
@@ -98,9 +99,9 @@ class OpenRouterAPI(ChatAPI):
             "min_p": self.settings.min_p if settings is None else settings.min_p,
             "top_a": self.settings.top_a if settings is None else settings.top_a,
         }
-        if self.settings.seed is not None:
+        if self.settings.seed is not None or settings.seed is not None:
             body["seed"] = self.settings.seed if settings is None else settings.seed
-        if self.settings.max_tokens is not None:
+        if self.settings.max_tokens is not None or settings.max_tokens is not None:
             body["max_tokens"] = self.settings.max_tokens if settings is None else settings.max_tokens
         return body
 
@@ -108,7 +109,7 @@ class OpenRouterAPI(ChatAPI):
         response = requests.post(
             url=self.base_url,
             headers={"Authorization": f"Bearer {self.api_key}"},
-            json=self._prepare_request_body(messages, settings)
+            json=self._prepare_request_body(messages, settings=settings)
         )
         return response.json()['choices'][0]['message']['content']
 
@@ -176,17 +177,17 @@ class OpenRouterAPIPromptMode(ChatAPI):
             "min_p": self.settings.min_p if settings is None else settings.min_p,
             "top_a": self.settings.top_a if settings is None else settings.top_a,
         }
-        if self.settings.seed is not None:
-            body["seed"] = self.settings.seed
-        if self.settings.max_tokens is not None:
-            body["max_tokens"] = self.settings.max_tokens
+        if self.settings.seed is not None or settings.seed is not None:
+            body["seed"] = self.settings.seed if settings is None else settings.seed
+        if self.settings.max_tokens is not None or settings.max_tokens is not None:
+            body["max_tokens"] = self.settings.max_tokens if settings is None else settings.max_tokens
         return body
 
     def get_response(self, messages: List[Dict[str, str]], settings=None) -> str:
         response = requests.post(
             url=self.base_url,
             headers={"Authorization": f"Bearer {self.api_key}"},
-            json=self._prepare_request_body(messages, settings)
+            json=self._prepare_request_body(messages,settings=settings)
         )
         return response.json()['choices'][0]['text']
 
@@ -246,16 +247,21 @@ class LlamaAgentProvider(ChatAPI):
     def get_response(self, messages: List[Dict[str, str]], settings=None) -> str:
         # prompt, _ = self.main_message_formatter.format_conversation(messages=messages, response_role=Roles.assistant)
         self.settings.stream = False
+        if settings is not None:
+            settings.stream = False
         #self.settings.add_additional_stop_sequences(self.main_message_formatter.default_stop_sequences)
         #if self.debug_output:
         #print(prompt)
-        return self.provider.create_chat_completion(messages, self.structured_settings,
-                                                    self.settings if settings is None else settings)['choices'][0][
-            'text']
+        response = self.provider.create_chat_completion(messages, self.structured_settings,
+                                                        self.settings if settings is None else settings)
+        return response['choices'][0][
+            'message']['content']
 
     def get_streaming_response(self, messages: List[Dict[str, str]], settings=None) -> Generator[str, None, None]:
         #prompt, _ = self.main_message_formatter.format_conversation(messages=messages, response_role=Roles.assistant)
         self.settings.stream = True
+        if settings is not None:
+            settings.stream = True
         #self.settings.add_additional_stop_sequences(self.main_message_formatter.default_stop_sequences)
         #if self.debug_output:
         #    print(prompt)

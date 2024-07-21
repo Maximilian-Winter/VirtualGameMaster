@@ -1,49 +1,18 @@
-You are tasked with updating the Game Information sections based on recent developments. Focus on significant changes since the last update, following these guidelines:
+Your task is to update the Game Information sections below, based on the chat history between a game master and a player. Follow these guidelines:
 
-1. Review the current game information and recent chat history thoroughly.
+1. Review the current Game Information sections below and then the chat history.
 2. Identify sections with significant changes or developments.
 3. Provide complete updates for changed sections, reflecting the current state accurately.
 4. Maintain consistency with the established narrative, world rules, and character motivations.
 5. Consider both explicit changes and implicit consequences of recent events.
+6. Only include sections that have changed or require updates.
+7. Provide full, updated content for each changed section, not just the changes.
+8. Ensure updates are comprehensive and accurately reflect the current game state.
+9. Use bullet points for clarity when listing multiple items within a section.
+10. Include brief explanations for significant changes to maintain narrative coherence.
+11. Update interconnected sections to maintain consistency (e.g., if a new NPC is added to "Key NPCs", consider updating "Relationships" if relevant).
 
-### Sections to Update (if changed):
-- Setting
-- Player Character
-- Companions
-- Relationships
-- Character Details
-- Party Members
-- Location
-- Story Summary
-- Important Events
-- Active Quests
-- Key NPCs
-- Inventory
-- Special Items
-- World State
-- Factions
-- Time and Calendar
-
-### Instructions:
-1. Only include sections that have changed or require updates.
-2. Provide full, updated content for each changed section, not just the changes.
-3. Ensure updates are comprehensive and accurately reflect the current game state.
-4. Use bullet points for clarity when listing multiple items within a section.
-5. Highlight major changes or new information using bold text.
-6. Include brief explanations for significant changes to maintain narrative coherence.
-7. Update interconnected sections to maintain consistency (e.g., if a new NPC is added to "Key NPCs", consider updating "Relationships" if relevant).
-8. For the "Story Summary" section, append new developments rather than rewriting the entire summary.
-9. In the "Important Events" section, add new events and remove outdated ones if necessary.
-10. For "Active Quests", update progress, add new quests, and remove completed ones.
-11. In the "Time and Calendar" section, update the current date/time and any upcoming significant dates.
-
-### Update Considerations:
-- Character Growth: Reflect any character development, new skills, or changing motivations.
-- World Dynamics: Consider how recent events might affect the larger world state or faction relationships.
-- Consequences: Include both immediate and potential long-term consequences of player actions.
-- Foreshadowing: Subtly hint at future plot points or challenges when appropriate.
-
-### Current Game Information:
+## Game Information
 
 <setting>
 {setting}
@@ -109,13 +78,4 @@ You are tasked with updating the Game Information sections based on recent devel
 {time_and_calendar}
 </time_and_calendar>
 
-Present only the updated sections in your response, using the following format with xml-tags:
-
-<section_name>
-Updated content
-</section_name>
-
-Example output:
-<location>
-New York City
-</location>
+Your goal is to maintain an accurate and comprehensive record of the game state to ensure consistency in future narrations and decision-making.

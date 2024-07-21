@@ -160,12 +160,23 @@ class VirtualGameMaster:
 
         settings = self.api.get_default_settings()
         settings.temperature = 0.3
-        response = self.api.get_response(history, settings)
+        settings.top_p = 1.0
+        settings.top_k = 0
+        settings.min_p = 0.0
+        settings.tfs_z = 1.0
+
+        settings.n_predict = 8192
+        response_gen = self.api.get_streaming_response(history, settings)
+
+        full_response = ""
+        for response_chunk in response_gen:
+            full_response += response_chunk
+            print(response_chunk, end="", flush=True)
 
         if self.debug_mode:
-            print(f"Update game info:\n{response}")
+            print(f"Update game info:\n{full_response}")
 
-        self.update_template_fields(response)
+        self.update_template_fields(full_response)
         self.history_offset = len(self.history.messages) - self.kept_messages
 
         self.save()
