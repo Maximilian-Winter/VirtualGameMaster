@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 
 from message_template import MessageTemplate
 from chat_api import ChatAPI, LlamaAgentProvider, OpenRouterAPI, OpenAIChatAPI, LlamaAgentProviderCustom, \
-    AnthropicChatAPI
+    AnthropicChatAPI, OpenRouterAPIPromptMode
 from chat_history import ChatHistory, Message, ChatFormatter
 from utilities import load_yaml_initial_game_state
 from command_system import CommandSystem
@@ -56,6 +56,14 @@ class VirtualGameMasterChatAPISelector:
             return api
         elif self.config.API_TYPE == "openrouter":
             api = OpenRouterAPI(self.config.API_KEY, self.config.MODEL)
+            api.settings.temperature = self.config.TEMPERATURE
+            api.settings.top_p = self.config.TOP_P
+            api.settings.top_k = self.config.TOP_K
+            api.settings.min_p = self.config.MIN_P
+            api.settings.max_tokens = self.config.MAX_TOKENS
+            return api
+        elif self.config.API_TYPE == "openrouter_custom":
+            api = OpenRouterAPIPromptMode(self.config.API_KEY, self.config.MODEL)
             api.settings.temperature = self.config.TEMPERATURE
             api.settings.top_p = self.config.TOP_P
             api.settings.top_k = self.config.TOP_K
@@ -164,6 +172,10 @@ class VirtualGameMaster:
     def manual_save(self):
         self.generate_save_state()
 
+    def get_currently_used_history(self):
+        history = self.history.to_list()[self.history_offset:]
+        return history
+
     def generate_save_state(self):
         history = self.history.to_list()[self.history_offset:]
 
@@ -185,7 +197,7 @@ class VirtualGameMaster:
         settings.min_p = 0.0
         settings.tfs_z = 1.0
 
-        settings.n_predict = 8192
+        settings.max_tokens = 4096
         prompt_message = {"role": "user", "content": prompt}
         response_gen = self.api.get_streaming_response([prompt_message], settings)
 

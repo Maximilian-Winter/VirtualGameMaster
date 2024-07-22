@@ -96,3 +96,12 @@ class ChatHistory:
         except (FileNotFoundError, json.JSONDecodeError) as e:
             print(f"Error loading chat history: {e}. Starting with an empty history.")
             self.messages = []
+
+    def delete_last_messages(self, k: int) -> int:
+        if k >= len(self.messages):
+            deleted = len(self.messages)
+            self.messages.clear()
+        else:
+            deleted = k
+            self.messages = self.messages[:-k]
+        return deleted

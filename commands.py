@@ -1,4 +1,6 @@
 from typing import Tuple
+
+from chat_history import ChatFormatter
 from command_system import CommandSystem
 
 
@@ -61,3 +63,43 @@ def edit_message(vgm, *args):
             return f"Message {message_id} not found.", False
     except ValueError:
         return "Invalid message ID. Please provide a number.", False
+
+
+@CommandSystem.command("delete_last")
+def delete_last_messages(vgm, *args):
+    if len(args) != 1:
+        return "Usage: @delete_last <number_of_messages>", False
+    try:
+        k = int(args[0])
+        if k <= 0:
+            return "Please provide a positive number of messages to delete.", False
+        deleted = vgm.history.delete_last_messages(k)
+        return f"Deleted the last {deleted} message(s).", False
+    except ValueError:
+        return "Invalid input. Please provide a number.", False
+
+
+@CommandSystem.command("rm_all")
+def delete_all_messages(vgm, *args):
+    deleted = vgm.history.delete_last_messages(100000)
+    return f"Deleted the last {deleted} message(s).", False
+
+
+@CommandSystem.command("show_history")
+def show_history(vgm, *args):
+    history = vgm.get_currently_used_history()
+
+    template = "{role}: {content}\n\n"
+    role_names = {
+        "assistant": "Game Master",
+        "user": "Player"
+    }
+    formatter = ChatFormatter(template, role_names)
+
+    output = "History:\n"
+    if len(history) > 0:
+        output += formatter.format_messages(history)
+    else:
+        output += "History is empty.\n"
+
+    return output, False

@@ -169,6 +169,7 @@ class OpenRouterAPIPromptMode(ChatAPI):
         prompt, _ = self.main_message_formatter.format_conversation(messages, Roles.assistant)
         print(prompt)
         body = {
+
             "model": self.model,
             "prompt": prompt,
             "stream": stream,
