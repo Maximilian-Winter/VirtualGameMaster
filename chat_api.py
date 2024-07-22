@@ -31,6 +31,7 @@ class OpenAISettings:
     def __init__(self):
         self.temperature = 0.4
         self.top_p = 1
+        self.max_tokens = 1024
 
 
 class OpenAIChatAPI(ChatAPI):
@@ -43,6 +44,7 @@ class OpenAIChatAPI(ChatAPI):
         response = self.client.chat.completions.create(
             model=self.model,
             messages=messages,
+            max_tokens=self.settings.max_tokens,
             temperature=self.settings.temperature if settings is None else settings.temperature,
             top_p=self.settings.top_p if settings is None else settings.top_p
         )
@@ -52,6 +54,7 @@ class OpenAIChatAPI(ChatAPI):
         stream = self.client.chat.completions.create(
             model=self.model,
             messages=messages,
+            max_tokens=self.settings.max_tokens,
             stream=True,
             temperature=self.settings.temperature if settings is None else settings.temperature,
             top_p=self.settings.top_p if settings is None else settings.top_p
@@ -318,7 +321,7 @@ class AnthropicSettings:
     def __init__(self):
         self.temperature = 0.7
         self.top_p = 1.0
-        self.max_tokens = 1000
+        self.max_tokens = 1024
 
 
 class AnthropicChatAPI(ChatAPI):

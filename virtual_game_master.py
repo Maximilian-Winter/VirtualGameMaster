@@ -52,6 +52,7 @@ class VirtualGameMasterChatAPISelector:
             api = OpenAIChatAPI(self.config.API_KEY, self.config.API_URL, self.config.MODEL)
             api.settings.temperature = self.config.TEMPERATURE
             api.settings.top_p = self.config.TOP_P
+            api.settings.max_tokens = self.config.MAX_TOKENS
             return api
         elif self.config.API_TYPE == "openrouter":
             api = OpenRouterAPI(self.config.API_KEY, self.config.MODEL)
@@ -59,6 +60,7 @@ class VirtualGameMasterChatAPISelector:
             api.settings.top_p = self.config.TOP_P
             api.settings.top_k = self.config.TOP_K
             api.settings.min_p = self.config.MIN_P
+            api.settings.max_tokens = self.config.MAX_TOKENS
             return api
         elif self.config.API_TYPE == "llamacpp":
             api = LlamaAgentProvider(self.config.API_URL, self.config.API_KEY)
@@ -67,6 +69,7 @@ class VirtualGameMasterChatAPISelector:
             api.settings.top_k = self.config.TOP_K
             api.settings.min_p = self.config.MIN_P
             api.settings.tfs_z = self.config.TFS_Z
+            api.settings.max_tokens = self.config.MAX_TOKENS
             return api
         elif self.config.API_TYPE == "anthropic":
             api = AnthropicChatAPI(self.config.API_KEY, self.config.MODEL)
