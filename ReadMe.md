@@ -8,6 +8,7 @@ Virtual Game Master is an open-source project that leverages Large Language Mode
     - OpenAI-compatible APIs
     - Open Router
     - Local llama.cpp server
+    - Anthropic
 - Command-line interface for basic interaction
 - React-based web user interface for enhanced gameplay
 - Automatic game state saving through LLM-generated summaries
