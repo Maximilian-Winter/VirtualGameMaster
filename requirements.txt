@@ -4,3 +4,4 @@ requests
 PyYAML
 python-dotenv
 fastapi
+anthropic

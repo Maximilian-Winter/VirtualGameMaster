@@ -1,6 +1,5 @@
 import json
 from abc import ABC, abstractmethod
-from typing import List, Dict, Generator
 
 import requests
 
@@ -11,6 +10,8 @@ from llama_cpp_agent.llm_output_settings import LlmStructuredOutputSettings, Llm
 from llama_cpp_agent.providers import LlamaCppServerProvider
 from llama_cpp_agent import MessagesFormatterType
 from llama_cpp_agent.messages_formatter import get_predefined_messages_formatter, PromptMarkers, MessagesFormatter
+from anthropic import Anthropic
+from typing import List, Dict, Generator
 
 
 class ChatAPI(ABC):
@@ -230,18 +231,6 @@ class LlamaAgentProvider(ChatAPI):
         self.settings = self.provider.get_provider_default_settings()
 
         self.debug_output = debug_output
-
-        #if messages_formatter_type:
-        #    self.main_message_formatter = get_predefined_messages_formatter(messages_formatter_type)
-        #else:
-        #    prompt_markers = {
-        #        Roles.system: PromptMarkers("""### Instruction:\n""", """\n\n"""),
-        #        Roles.user: PromptMarkers("""### Player:\n""", """\n\n"""),
-        #        Roles.assistant: PromptMarkers("""### Game Master:\n""", """\n\n"""),
-        #        Roles.tool: PromptMarkers("""### Function Tool:\n""", """\n\n"""),
-        #    }
-        #    self.main_message_formatter = MessagesFormatter("", prompt_markers, False, ["### Player:"], False)
-
         self.structured_settings = LlmStructuredOutputSettings(output_type=LlmStructuredOutputType.no_structured_output)
 
     def get_response(self, messages: List[Dict[str, str]], settings=None) -> str:
@@ -249,22 +238,17 @@ class LlamaAgentProvider(ChatAPI):
         self.settings.stream = False
         if settings is not None:
             settings.stream = False
-        #self.settings.add_additional_stop_sequences(self.main_message_formatter.default_stop_sequences)
-        #if self.debug_output:
-        #print(prompt)
+
         response = self.provider.create_chat_completion(messages, self.structured_settings,
                                                         self.settings if settings is None else settings)
         return response['choices'][0][
             'message']['content']
 
     def get_streaming_response(self, messages: List[Dict[str, str]], settings=None) -> Generator[str, None, None]:
-        #prompt, _ = self.main_message_formatter.format_conversation(messages=messages, response_role=Roles.assistant)
         self.settings.stream = True
         if settings is not None:
             settings.stream = True
-        #self.settings.add_additional_stop_sequences(self.main_message_formatter.default_stop_sequences)
-        #if self.debug_output:
-        #    print(prompt)
+
         for tok in self.provider.create_chat_completion(messages, self.structured_settings,
                                                         self.settings if settings is None else settings):
             if "content" in tok['choices'][0]['delta']:
@@ -328,3 +312,58 @@ class LlamaAgentProviderCustom(ChatAPI):
 
     def get_default_settings(self):
         return self.provider.get_provider_default_settings()
+
+
+class AnthropicSettings:
+    def __init__(self):
+        self.temperature = 0.7
+        self.top_p = 1.0
+        self.max_tokens = 1000
+
+
+class AnthropicChatAPI(ChatAPI):
+    def __init__(self, api_key: str, model: str):
+        self.client = Anthropic(api_key=api_key)
+        self.model = model
+        self.settings = AnthropicSettings()
+
+    def _prepare_messages(self, messages: List[Dict[str, str]]) -> tuple:
+        system_message = None
+        other_messages = []
+        for message in messages:
+            cleaned_message = {k: v for k, v in message.items() if k != 'id'}
+            if cleaned_message['role'] == 'system':
+                system_message = cleaned_message['content']
+            else:
+                other_messages.append(cleaned_message)
+        return system_message, other_messages
+
+    def get_response(self, messages: List[Dict[str, str]], settings=None) -> str:
+        system, other_messages = self._prepare_messages(messages)
+        response = self.client.messages.create(
+            model=self.model,
+            system=system,
+            messages=other_messages,
+            temperature=self.settings.temperature if settings is None else settings.temperature,
+            top_p=self.settings.top_p if settings is None else settings.top_p,
+            max_tokens=self.settings.max_tokens if settings is None else settings.max_tokens
+        )
+        return response.content[0].text
+
+    def get_streaming_response(self, messages: List[Dict[str, str]], settings=None) -> Generator[str, None, None]:
+        system, other_messages = self._prepare_messages(messages)
+        stream = self.client.messages.create(
+            model=self.model,
+            system=system,
+            messages=other_messages,
+            stream=True,
+            temperature=self.settings.temperature if settings is None else settings.temperature,
+            top_p=self.settings.top_p if settings is None else settings.top_p,
+            max_tokens=self.settings.max_tokens if settings is None else settings.max_tokens
+        )
+        for chunk in stream:
+            if chunk.content:
+                yield chunk.content[0].text
+
+    def get_default_settings(self):
+        return AnthropicSettings()

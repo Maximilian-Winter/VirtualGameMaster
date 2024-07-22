@@ -10,7 +10,8 @@ from typing import Tuple, Generator
 from dotenv import load_dotenv
 
 from message_template import MessageTemplate
-from chat_api import ChatAPI, LlamaAgentProvider, OpenRouterAPI, OpenAIChatAPI, LlamaAgentProviderCustom
+from chat_api import ChatAPI, LlamaAgentProvider, OpenRouterAPI, OpenAIChatAPI, LlamaAgentProviderCustom, \
+    AnthropicChatAPI
 from chat_history import ChatHistory, Message, ChatFormatter
 from utilities import load_yaml_initial_game_state
 from command_system import CommandSystem
@@ -30,6 +31,7 @@ class VirtualGameMasterConfig:
         self.SYSTEM_MESSAGE_FILE = os.getenv("SYSTEM_MESSAGE_FILE")
         self.SAVE_SYSTEM_MESSAGE_FILE = os.getenv("SAVE_SYSTEM_MESSAGE_FILE")
         self.SAVE_REMINDER_MESSAGE_FILE = os.getenv("SAVE_REMINDER_MESSAGE_FILE")
+        self.MAX_TOKENS = int(os.getenv("MAX_TOKENS_PER_RESPONSE"))
         self.API_TYPE = os.getenv("API_TYPE", "openai").lower()
         self.API_KEY = os.getenv("API_KEY", None)
         self.API_URL = os.getenv("API_URL")
@@ -65,6 +67,12 @@ class VirtualGameMasterChatAPISelector:
             api.settings.top_k = self.config.TOP_K
             api.settings.min_p = self.config.MIN_P
             api.settings.tfs_z = self.config.TFS_Z
+            return api
+        elif self.config.API_TYPE == "anthropic":
+            api = AnthropicChatAPI(self.config.API_KEY, self.config.MODEL)
+            api.settings.temperature = self.config.TEMPERATURE
+            api.settings.top_p = self.config.TOP_P
+            api.settings.max_tokens = self.config.MAX_TOKENS
             return api
         else:
             raise ValueError(f"Unsupported API type: {self.config.API_TYPE}")
