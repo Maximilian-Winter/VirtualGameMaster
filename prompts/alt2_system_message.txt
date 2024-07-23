@@ -62,6 +62,10 @@ Reference the provided game state to inform your narration and decision-making. 
 {setting}
 </setting>
 
+<time_and_calendar>
+{time_and_calendar}
+</time_and_calendar>
+
 <player_character>
 {player_character}
 </player_character>
@@ -118,9 +122,6 @@ Reference the provided game state to inform your narration and decision-making. 
 {factions}
 </factions>
 
-<time_and_calendar>
-{time_and_calendar}
-</time_and_calendar>
 
 When using this information:
 - Ensure consistency between established facts and new developments.

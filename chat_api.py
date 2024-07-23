@@ -158,7 +158,7 @@ class OpenRouterAPIPromptMode(ChatAPI):
             self.main_message_formatter = get_predefined_messages_formatter(messages_formatter_type)
         else:
             prompt_markers = {
-                Roles.system: PromptMarkers("""### Instruction:\n""", """\n\n"""),
+                Roles.system: PromptMarkers("""### Instructions:\n""", """\n\n"""),
                 Roles.user: PromptMarkers("""### Player:\n""", """\n\n"""),
                 Roles.assistant: PromptMarkers("""### Game Master:\n""", """\n\n"""),
                 Roles.tool: PromptMarkers("""### Function Tool:\n""", """\n\n"""),
@@ -169,10 +169,10 @@ class OpenRouterAPIPromptMode(ChatAPI):
         prompt, _ = self.main_message_formatter.format_conversation(messages, Roles.assistant)
         print(prompt)
         body = {
-
             "model": self.model,
             "prompt": prompt,
             "stream": stream,
+            "stop": self.main_message_formatter.default_stop_sequences,
             "temperature": self.settings.temperature if settings is None else settings.temperature,
             "top_p": self.settings.top_p if settings is None else settings.top_p,
             "top_k": self.settings.top_k if settings is None else settings.top_k,
@@ -229,7 +229,7 @@ class OpenRouterAPIPromptMode(ChatAPI):
 
 class LlamaAgentProvider(ChatAPI):
 
-    def __init__(self, server_ip: str, api_key: str, messages_formatter_type: MessagesFormatterType = None,
+    def __init__(self, server_ip: str, api_key: str,
                  debug_output: bool = False):
         self.provider = LlamaCppServerProvider(server_ip, api_key=api_key)
         self.settings = self.provider.get_provider_default_settings()
@@ -238,7 +238,6 @@ class LlamaAgentProvider(ChatAPI):
         self.structured_settings = LlmStructuredOutputSettings(output_type=LlmStructuredOutputType.no_structured_output)
 
     def get_response(self, messages: List[Dict[str, str]], settings=None) -> str:
-        # prompt, _ = self.main_message_formatter.format_conversation(messages=messages, response_role=Roles.assistant)
         self.settings.stream = False
         if settings is not None:
             settings.stream = False
@@ -277,8 +276,8 @@ class LlamaAgentProviderCustom(ChatAPI):
         else:
             prompt_markers = {
                 Roles.system: PromptMarkers("""### System Instructions:\n""", """\n\n"""),
-                Roles.user: PromptMarkers("""[INST] ### Player:\n""", """\n\n[/INST]"""),
-                Roles.assistant: PromptMarkers("""### Game Master:\n""", """\n\n</s>"""),
+                Roles.user: PromptMarkers("""### Player:\n""", """\n\n"""),
+                Roles.assistant: PromptMarkers("""### Game Master:\n""", """\n\n"""),
                 Roles.tool: PromptMarkers("""### Function Tool:\n""", """\n\n"""),
             }
             self.main_message_formatter = MessagesFormatter("", prompt_markers, False, ["### Player:"], False)

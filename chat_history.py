@@ -67,7 +67,7 @@ class ChatHistory:
         filename = f"chat_history_{save_id}.json"
 
         with open(f"{self.history_folder}/{filename}", "w") as f:
-            json.dump(self.to_list(), f)
+            json.dump(self.to_list(), f, indent=2)
 
     def load_history(self):
         if not os.path.exists(self.history_folder):

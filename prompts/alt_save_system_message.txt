@@ -7,7 +7,7 @@ You are an AI assistant tasked with updating the game state of a text-based role
 3. For each section in the current game state, identify any new or changed information based on the chat history.
 4. Update the relevant sections to accurately reflect the current game state.
 5. Ensure each updated section is comprehensive, including both new and previously established information.
-6. Use the XML format provided for each updated section.
+6. Remove outdated information
 
 When updating the game state, pay particular attention to the following aspects:
 
@@ -26,6 +26,11 @@ When updating the game state, pay particular attention to the following aspects:
 <setting>
 {setting}
 </setting>
+
+<time_and_calendar>
+{time_and_calendar}
+</time_and_calendar>
+
 
 <player_character>
 {player_character}
@@ -82,12 +87,7 @@ When updating the game state, pay particular attention to the following aspects:
 <factions>
 {factions}
 </factions>
-
-<time_and_calendar>
-{time_and_calendar}
-</time_and_calendar>
 </current_game_state>
-
 Now, carefully review and analyze the following chat history:
 
 <chat_history>
@@ -105,5 +105,6 @@ Ensure that your updates:
 - Incorporate new developments from the chat history
 - Provide comprehensive information, not just changes
 - Reflect the current state of the game world, characters, and plot
+- Are only using XML tags for the sections not their content.
 
 Remember, your goal is to create an updated game state that accurately reflects all relevant information from both the previous state and recent developments in the chat history. This updated state will be used to inform future gameplay and narrative decisions, so attention to detail and narrative consistency are crucial.

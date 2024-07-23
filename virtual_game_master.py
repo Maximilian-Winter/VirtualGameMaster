@@ -1,93 +1,17 @@
 import datetime
 import json
 import os
-import re
-from xml.etree import ElementTree as ET
-from io import StringIO
 
 from typing import Tuple, Generator
 
-from dotenv import load_dotenv
-
+from game_state import GameState
+from config import VirtualGameMasterConfig
 from message_template import MessageTemplate
-from chat_api import ChatAPI, LlamaAgentProvider, OpenRouterAPI, OpenAIChatAPI, LlamaAgentProviderCustom, \
-    AnthropicChatAPI, OpenRouterAPIPromptMode
+from chat_api import ChatAPI
 from chat_history import ChatHistory, Message, ChatFormatter
-from utilities import load_yaml_initial_game_state
+
 from command_system import CommandSystem
 import commands
-
-# Load environment variables
-load_dotenv()
-
-
-class VirtualGameMasterConfig:
-    def __init__(self):
-        load_dotenv()  # Load environment variables from .env file
-        self.GAME_SAVE_FOLDER = os.getenv("GAME_SAVE_FOLDER")
-        self.INITIAL_GAME_STATE = os.getenv("INITIAL_GAME_STATE")
-        self.MAX_MESSAGES = int(os.getenv("MAX_MESSAGES"))
-        self.KEPT_MESSAGES = int(os.getenv("KEPT_MESSAGES"))
-        self.SYSTEM_MESSAGE_FILE = os.getenv("SYSTEM_MESSAGE_FILE")
-        self.SAVE_SYSTEM_MESSAGE_FILE = os.getenv("SAVE_SYSTEM_MESSAGE_FILE")
-        self.SAVE_REMINDER_MESSAGE_FILE = os.getenv("SAVE_REMINDER_MESSAGE_FILE")
-        self.MAX_TOKENS = int(os.getenv("MAX_TOKENS_PER_RESPONSE"))
-        self.API_TYPE = os.getenv("API_TYPE", "openai").lower()
-        self.API_KEY = os.getenv("API_KEY", None)
-        self.API_URL = os.getenv("API_URL")
-        self.MODEL = os.getenv("MODEL")
-        self.TEMPERATURE = float(os.getenv("TEMPERATURE", 0.7))
-        self.TOP_P = float(os.getenv("TOP_P", 1.0))
-        self.TOP_K = int(os.getenv("TOP_K", 0))
-        self.MIN_P = float(os.getenv("MIN_P", 0.0))
-        self.TFS_Z = float(os.getenv("TFS_Z", 1.0))
-
-
-class VirtualGameMasterChatAPISelector:
-    def __init__(self, config: VirtualGameMasterConfig):
-        self.config = config
-
-    def get_api(self) -> ChatAPI:
-        if self.config.API_TYPE == "openai":
-            api = OpenAIChatAPI(self.config.API_KEY, self.config.API_URL, self.config.MODEL)
-            api.settings.temperature = self.config.TEMPERATURE
-            api.settings.top_p = self.config.TOP_P
-            api.settings.max_tokens = self.config.MAX_TOKENS
-            return api
-        elif self.config.API_TYPE == "openrouter":
-            api = OpenRouterAPI(self.config.API_KEY, self.config.MODEL)
-            api.settings.temperature = self.config.TEMPERATURE
-            api.settings.top_p = self.config.TOP_P
-            api.settings.top_k = self.config.TOP_K
-            api.settings.min_p = self.config.MIN_P
-            api.settings.max_tokens = self.config.MAX_TOKENS
-            return api
-        elif self.config.API_TYPE == "openrouter_custom":
-            api = OpenRouterAPIPromptMode(self.config.API_KEY, self.config.MODEL)
-            api.settings.temperature = self.config.TEMPERATURE
-            api.settings.top_p = self.config.TOP_P
-            api.settings.top_k = self.config.TOP_K
-            api.settings.min_p = self.config.MIN_P
-            api.settings.max_tokens = self.config.MAX_TOKENS
-            return api
-        elif self.config.API_TYPE == "llamacpp":
-            api = LlamaAgentProvider(self.config.API_URL, self.config.API_KEY)
-            api.settings.temperature = self.config.TEMPERATURE
-            api.settings.top_p = self.config.TOP_P
-            api.settings.top_k = self.config.TOP_K
-            api.settings.min_p = self.config.MIN_P
-            api.settings.tfs_z = self.config.TFS_Z
-            api.settings.max_tokens = self.config.MAX_TOKENS
-            return api
-        elif self.config.API_TYPE == "anthropic":
-            api = AnthropicChatAPI(self.config.API_KEY, self.config.MODEL)
-            api.settings.temperature = self.config.TEMPERATURE
-            api.settings.top_p = self.config.TOP_P
-            api.settings.max_tokens = self.config.MAX_TOKENS
-            return api
-        else:
-            raise ValueError(f"Unsupported API type: {self.config.API_TYPE}")
-
 
 class VirtualGameMaster:
     def __init__(self, config: VirtualGameMasterConfig, api: ChatAPI, debug_mode: bool = False):
@@ -100,10 +24,7 @@ class VirtualGameMaster:
             config.SAVE_SYSTEM_MESSAGE_FILE
         )
 
-        with open(config.SAVE_REMINDER_MESSAGE_FILE, "r") as file:
-            self.reminder_message = file.read()
-
-        self.template_fields = load_yaml_initial_game_state(config.INITIAL_GAME_STATE)
+        self.game_state = GameState(config.INITIAL_GAME_STATE)
         self.history = ChatHistory(config.GAME_SAVE_FOLDER)
         self.history_offset = 0
 
@@ -148,7 +69,7 @@ class VirtualGameMaster:
         history = history[self.history_offset:]
         history.insert(0, {"role": "system",
                            "content": self.system_message_template.generate_message_content(
-                               self.template_fields).strip()})
+                               self.game_state.template_fields).strip()})
 
         if self.debug_mode:
             print(history[0]["content"])
@@ -187,7 +108,8 @@ class VirtualGameMaster:
         formatter = ChatFormatter(template, role_names)
         formatted_chat = formatter.format_messages(history)
 
-        prompt = self.save_system_message_template.generate_message_content(template_fields=self.template_fields, CHAT_HISTORY=formatted_chat)
+        prompt = self.save_system_message_template.generate_message_content(template_fields=self.game_state.template_fields,
+                                                                            CHAT_HISTORY=formatted_chat)
 
         print(prompt)
         settings = self.api.get_default_settings()
@@ -209,47 +131,17 @@ class VirtualGameMaster:
         if self.debug_mode:
             print(f"Update game info:\n{full_response}")
 
-        self.update_template_fields(full_response)
+        self.game_state.update_from_xml(full_response)
         self.history_offset = len(self.history.messages) - self.kept_messages
 
         self.save()
-
-    def update_template_fields(self, save_state: str):
-        # Wrap the save_state in a root element to ensure valid XML
-        xml_string = f"<root>{save_state}</root>"
-
-        try:
-            # Parse the XML string
-            root = ET.fromstring(xml_string)
-
-            # Function to recursively process elements
-            def process_element(element):
-                for child in element:
-                    if len(child) == 0:  # If the element has no children
-                        # Use only the last part of the tag as the key
-                        key = child.tag.split('.')[-1]
-                        self.template_fields[key] = child.text.strip() if child.text else ""
-                    else:
-                        # Recursively process nested elements
-                        process_element(child)
-
-            # Start processing from the root
-            process_element(root)
-
-        except ET.ParseError:
-            # Fallback to the original regex method if XML parsing fails
-            sections = re.findall(r'<([\w.]+)>(.*?)</\1>', save_state, re.DOTALL)
-            for section, content in sections:
-                # Use only the last part of the section name as the key
-                key = section.split('.')[-1]
-                self.template_fields[key] = content.strip()
 
     def save(self):
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         save_id = f"{timestamp}"
         filename = f"save_state_{save_id}.json"
         save_data = {
-            "template_fields": self.template_fields,
+            "template_fields": self.game_state.template_fields,
             "history_offset": self.history_offset,
             "next_message_id": self.next_message_id
         }
@@ -273,7 +165,7 @@ class VirtualGameMaster:
         try:
             with open(f"{self.config.GAME_SAVE_FOLDER}/{latest_save}", "r") as f:
                 save_data = json.load(f)
-            self.template_fields = save_data.get("template_fields", self.template_fields)
+            self.game_state.template_fields = save_data.get("template_fields", self.game_state.template_fields)
             self.history_offset = save_data.get("history_offset", 0)
             self.next_message_id = save_data.get("next_message_id", self.next_message_id)
             print(f"Loaded the most recent game state: {latest_save}")

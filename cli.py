@@ -1,4 +1,5 @@
-from virtual_game_master import VirtualGameMasterConfig, VirtualGameMaster, VirtualGameMasterChatAPISelector
+from virtual_game_master import VirtualGameMasterConfig, VirtualGameMaster
+from chat_api_selector import VirtualGameMasterChatAPISelector
 
 
 def display_recent_messages(app: VirtualGameMaster, num_messages: int = 4):
@@ -42,8 +43,8 @@ def run_cli(app: VirtualGameMaster):
 
 # Usage
 if __name__ == "__main__":
-    config = VirtualGameMasterConfig()
-    config.GAME_SAVE_FOLDER = "chat_history/new_game42000"
+    config = VirtualGameMasterConfig.from_env()
+    config.GAME_SAVE_FOLDER = "chat_history/new_game002"
     api_selector = VirtualGameMasterChatAPISelector(config)
     api = api_selector.get_api()
     app = VirtualGameMaster(config, api, False)
