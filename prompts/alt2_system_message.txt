@@ -58,69 +58,56 @@ To enhance your narration:
 
 Reference the provided game state to inform your narration and decision-making. Use details from:
 
-<setting>
+### Setting
 {setting}
-</setting>
 
-<time_and_calendar>
+### Game World
+{game_world_information}
+
+### Time and Calendar
 {time_and_calendar}
-</time_and_calendar>
 
-<player_character>
+### Player Character
 {player_character}
-</player_character>
 
-<companions>
+### Companions
 {companions}
-</companions>
 
-<relationships>
-{relationships}
-</relationships>
-
-<character_details>
+### Character Details
 {character_details}
-</character_details>
 
-<party_members>
+### Relationships
+{relationships}
+
+### Party Members
 {party_members}
-</party_members>
 
-<location>
+### Location
 {location}
-</location>
 
-<story_summary>
-{story_summary}
-</story_summary>
-
-<important_events>
-{important_events}
-</important_events>
-
-<active_quests>
-{active_quests}
-</active_quests>
-
-<key_npcs>
-{key_npcs}
-</key_npcs>
-
-<inventory>
-{inventory}
-</inventory>
-
-<special_items>
-{special_items}
-</special_items>
-
-<world_state>
+### World State
 {world_state}
-</world_state>
 
-<factions>
+### Factions
 {factions}
-</factions>
+
+### Story Summary
+{story_summary}
+
+### Important Events
+{important_events}
+
+### Active Quests
+{active_quests}
+
+### Key NPCs
+{key_npcs}
+
+### Inventory
+{inventory}
+
+### Special Items
+{special_items}
 
 
 When using this information:

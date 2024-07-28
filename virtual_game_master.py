@@ -13,6 +13,7 @@ from chat_history import ChatHistory, Message, ChatFormatter
 from command_system import CommandSystem
 import commands
 
+
 class VirtualGameMaster:
     def __init__(self, config: VirtualGameMasterConfig, api: ChatAPI, debug_mode: bool = False):
         self.config = config
@@ -108,8 +109,9 @@ class VirtualGameMaster:
         formatter = ChatFormatter(template, role_names)
         formatted_chat = formatter.format_messages(history)
 
-        prompt = self.save_system_message_template.generate_message_content(template_fields=self.game_state.template_fields,
-                                                                            CHAT_HISTORY=formatted_chat)
+        prompt = self.save_system_message_template.generate_message_content(
+            template_fields=self.game_state.template_fields,
+            CHAT_HISTORY=formatted_chat)
 
         print(prompt)
         settings = self.api.get_default_settings()
@@ -141,6 +143,7 @@ class VirtualGameMaster:
         save_id = f"{timestamp}"
         filename = f"save_state_{save_id}.json"
         save_data = {
+            "settings": self.api.get_current_settings().to_dict(),
             "template_fields": self.game_state.template_fields,
             "history_offset": self.history_offset,
             "next_message_id": self.next_message_id

@@ -7,11 +7,17 @@ from openai import OpenAI
 
 from llama_cpp_agent.chat_history.messages import Roles
 from llama_cpp_agent.llm_output_settings import LlmStructuredOutputSettings, LlmStructuredOutputType
-from llama_cpp_agent.providers import LlamaCppServerProvider
+from llama_cpp_agent.providers import LlamaCppServerProvider, LlamaCppSamplingSettings
 from llama_cpp_agent import MessagesFormatterType
 from llama_cpp_agent.messages_formatter import get_predefined_messages_formatter, PromptMarkers, MessagesFormatter
 from anthropic import Anthropic
-from typing import List, Dict, Generator
+from typing import List, Dict, Generator, Union
+
+
+class ChatAPISettings(ABC):
+    @abstractmethod
+    def to_dict(self):
+        pass
 
 
 class ChatAPI(ABC):
@@ -23,18 +29,31 @@ class ChatAPI(ABC):
     def get_streaming_response(self, messages: List[Dict[str, str]], settings=None) -> Generator[str, None, None]:
         pass
 
-    def get_default_settings(self):
+    @abstractmethod
+    def get_default_settings(self) -> ChatAPISettings:
+        pass
+
+    @abstractmethod
+    def get_current_settings(self) -> ChatAPISettings:
         pass
 
 
-class OpenAISettings:
+class OpenAISettings(ChatAPISettings):
     def __init__(self):
         self.temperature = 0.4
         self.top_p = 1
         self.max_tokens = 1024
 
+    def to_dict(self):
+        return {
+            'temperature': self.temperature,
+            'top_p': self.top_p,
+            'max_tokens': self.max_tokens
+        }
+
 
 class OpenAIChatAPI(ChatAPI):
+
     def __init__(self, api_key: str, base_url: str, model: str):
         self.client = OpenAI(api_key=api_key, base_url=base_url)
         self.model = model
@@ -66,8 +85,11 @@ class OpenAIChatAPI(ChatAPI):
     def get_default_settings(self):
         return OpenAISettings()
 
+    def get_current_settings(self):
+        return self.settings
 
-class OpenRouterSettings:
+
+class OpenRouterSettings(ChatAPISettings):
     def __init__(self):
         self.temperature = 1.0
         self.top_p = 1.0
@@ -79,6 +101,20 @@ class OpenRouterSettings:
         self.top_a = 0.0
         self.seed = None
         self.max_tokens = None
+
+    def to_dict(self):
+        return {
+            'temperature': self.temperature,
+            'top_p': self.top_p,
+            'top_k': self.top_k,
+            'frequency_penalty': self.frequency_penalty,
+            'presence_penalty': self.presence_penalty,
+            'repetition_penalty': self.repetition_penalty,
+            'min_p': self.min_p,
+            'top_a': self.top_a,
+            'seed': self.seed,
+            'max_tokens': self.max_tokens
+        }
 
 
 class OpenRouterAPI(ChatAPI):
@@ -146,6 +182,9 @@ class OpenRouterAPI(ChatAPI):
 
     def get_default_settings(self):
         return OpenRouterSettings()
+
+    def get_current_settings(self):
+        return self.settings
 
 
 class OpenRouterAPIPromptMode(ChatAPI):
@@ -226,13 +265,131 @@ class OpenRouterAPIPromptMode(ChatAPI):
     def get_default_settings(self):
         return OpenRouterSettings()
 
+    def get_current_settings(self):
+        return self.settings
+
+
+class LlamaCppSettings(ChatAPISettings):
+    """
+    Settings for generating completions using the Llama.cpp server.
+
+    Args:
+        temperature (float): Controls the randomness of the generated completions. Higher values make the output more random.
+        top_k (int): Controls the diversity of the top-k sampling. Higher values result in more diverse completions.
+        top_p (float): Controls the diversity of the nucleus sampling. Higher values result in more diverse completions.
+        min_p (float): Minimum probability for nucleus sampling. Lower values result in more focused completions.
+        n_predict (int): Number of completions to predict. Set to -1 to use the default value.
+        n_keep (int): Number of completions to keep. Set to 0 for all predictions.
+        stream (bool): Enable streaming for long completions.
+        additional_stop_sequences (List[str]): List of stop sequences to finish completion generation. The official stop sequences of the model get added automatically.
+        tfs_z (float): Controls the temperature for top frequent sampling.
+        typical_p (float): Typical probability for top frequent sampling.
+        repeat_penalty (float): Penalty for repeating tokens in completions.
+        repeat_last_n (int): Number of tokens to consider for repeat penalty.
+        penalize_nl (bool): Enable penalizing newlines in completions.
+        presence_penalty (float): Penalty for presence of certain tokens.
+        frequency_penalty (float): Penalty based on token frequency.
+        penalty_prompt (Union[None, str, List[int]]): Prompts to apply penalty for certain tokens.
+        mirostat_mode (int): Mirostat level.
+        mirostat_tau (float): Mirostat temperature.
+        mirostat_eta (float): Mirostat eta parameter.
+        seed (int): Seed for randomness. Set to -1 for no seed.
+        ignore_eos (bool): Ignore end-of-sequence token.
+
+    Attributes:
+        temperature (float): Controls the randomness of the generated completions. Higher values make the output more random.
+        top_k (int): Controls the diversity of the top-k sampling. Higher values result in more diverse completions.
+        top_p (float): Controls the diversity of the nucleus sampling. Higher values result in more diverse completions.
+        min_p (float): Minimum probability for nucleus sampling. Lower values result in more focused completions.
+        n_predict (int): Number of completions to predict. Set to -1 to use the default value.
+        n_keep (int): Number of completions to keep. Set to 0 for all predictions.
+        stream (bool): Enable streaming for long completions.
+        additional_stop_sequences (List[str]): List of stop sequences to finish completion generation. The official stop sequences of the model get added automatically.
+        tfs_z (float): Controls the temperature for top frequent sampling.
+        typical_p (float): Typical probability for top frequent sampling.
+        repeat_penalty (float): Penalty for repeating tokens in completions.
+        repeat_last_n (int): Number of tokens to consider for repeat penalty.
+        penalize_nl (bool): Enable penalizing newlines in completions.
+        presence_penalty (float): Penalty for presence of certain tokens.
+        frequency_penalty (float): Penalty based on token frequency.
+        penalty_prompt (Union[None, str, List[int]]): Prompts to apply penalty for certain tokens.
+        mirostat_mode (int): Mirostat level.
+        mirostat_tau (float): Mirostat temperature.
+        mirostat_eta (float): Mirostat eta parameter.
+        seed (int): Seed for randomness. Set to -1 for no seed.
+        ignore_eos (bool): Ignore end-of-sequence token.
+    Methods:
+        save(file_path: str): Save the settings to a file.
+        load_from_file(file_path: str) -> LlamaCppServerGenerationSettings: Load the settings from a file.
+        load_from_dict(settings: dict) -> LlamaCppServerGenerationSettings: Load the settings from a dictionary.
+        as_dict() -> dict: Convert the settings to a dictionary.
+
+    """
+
+    temperature: float = 0.8
+    top_k: int = 40
+    top_p: float = 0.95
+    min_p: float = 0.05
+    n_predict: int = -1
+    n_keep: int = 0
+    stream: bool = True
+    additional_stop_sequences: List[str] = None
+    tfs_z: float = 1.0
+    typical_p: float = 1.0
+    repeat_penalty: float = 1.1
+    repeat_last_n: int = -1
+    penalize_nl: bool = False
+    presence_penalty: float = 0.0
+    frequency_penalty: float = 0.0
+    penalty_prompt: Union[None, str, List[int]] = None
+    mirostat_mode: int = 0
+    mirostat_tau: float = 5.0
+    mirostat_eta: float = 0.1
+    cache_prompt: bool = True
+    seed: int = -1
+    ignore_eos: bool = False
+    samplers: List[str] = None
+
+    def to_dict(self) -> dict:
+        """
+        Convert the settings to a dictionary.
+
+        Returns:
+            dict: The dictionary representation of the settings.
+        """
+        return {
+            'temperature': self.temperature,
+            'top_k': self.top_k,
+            'top_p': self.top_p,
+            'min_p': self.min_p,
+            'n_predict': self.n_predict,
+            'n_keep': self.n_keep,
+            'stream': self.stream,
+            'additional_stop_sequences': self.additional_stop_sequences,
+            'tfs_z': self.tfs_z,
+            'typical_p': self.typical_p,
+            'repeat_penalty': self.repeat_penalty,
+            'repeat_last_n': self.repeat_last_n,
+            'penalize_nl': self.penalize_nl,
+            'presence_penalty': self.presence_penalty,
+            'frequency_penalty': self.frequency_penalty,
+            'penalty_prompt': self.penalty_prompt,
+            'mirostat_mode': self.mirostat_mode,
+            'mirostat_tau': self.mirostat_tau,
+            'mirostat_eta': self.mirostat_eta,
+            'cache_prompt': self.cache_prompt,
+            'seed': self.seed,
+            'ignore_eos': self.ignore_eos,
+            'samplers': self.samplers
+        }
+
 
 class LlamaAgentProvider(ChatAPI):
 
     def __init__(self, server_ip: str, api_key: str,
                  debug_output: bool = False):
         self.provider = LlamaCppServerProvider(server_ip, api_key=api_key)
-        self.settings = self.provider.get_provider_default_settings()
+        self.settings = LlamaCppSettings()
 
         self.debug_output = debug_output
         self.structured_settings = LlmStructuredOutputSettings(output_type=LlmStructuredOutputType.no_structured_output)
@@ -243,7 +400,7 @@ class LlamaAgentProvider(ChatAPI):
             settings.stream = False
 
         response = self.provider.create_chat_completion(messages, self.structured_settings,
-                                                        self.settings if settings is None else settings)
+                                                        LlamaCppSamplingSettings.load_from_dict(self.settings.to_dict()) if settings is None else LlamaCppSamplingSettings.load_from_dict(settings.to_dict()))
         return response['choices'][0][
             'message']['content']
 
@@ -259,7 +416,10 @@ class LlamaAgentProvider(ChatAPI):
                 yield text
 
     def get_default_settings(self):
-        return self.provider.get_provider_default_settings()
+        return LlamaCppSettings
+
+    def get_current_settings(self):
+        return self.settings
 
 
 class LlamaAgentProviderCustom(ChatAPI):
@@ -316,12 +476,22 @@ class LlamaAgentProviderCustom(ChatAPI):
     def get_default_settings(self):
         return self.provider.get_provider_default_settings()
 
+    def get_current_settings(self):
+        return self.settings
 
-class AnthropicSettings:
+
+class AnthropicSettings(ChatAPISettings):
     def __init__(self):
         self.temperature = 0.7
         self.top_p = 1.0
         self.max_tokens = 1024
+
+    def to_dict(self):
+        return {
+            'temperature': self.temperature,
+            'top_p': self.top_p,
+            'max_tokens': self.max_tokens
+        }
 
 
 class AnthropicChatAPI(ChatAPI):
@@ -370,3 +540,6 @@ class AnthropicChatAPI(ChatAPI):
 
     def get_default_settings(self):
         return AnthropicSettings()
+
+    def get_current_settings(self):
+        return self.settings

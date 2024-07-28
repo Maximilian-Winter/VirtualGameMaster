@@ -105,3 +105,234 @@ character_details:
       - Elven half-plate armor designed with nature motifs
       - Longsword with vine-wrapped hilt
       - Shield with four-seasons tree symbol
+
+game_world_information:
+  General:
+    Races:
+      Common:
+        - Humans: Versatile and widespread
+        - Elves: Long-lived and magical
+        - Dwarves: Sturdy and craftsmen
+        - Halflings: Small and nimble
+        - Gnomes: Inventive and curious
+      Uncommon:
+        - Half-Elves: Blend of human and elven traits
+        - Half-Orcs: Strong and resilient
+        - Tieflings: Infernal heritage
+        - Dragonborn: Draconic humanoids
+      Rare:
+        - Aasimar: Celestial-touched humans
+        - Genasi: Elemental-touched humans
+        - Goliaths: Giant-kin
+        - Tabaxi: Cat-like humanoids
+
+    Gods:
+      Greater-Deities:
+        - Mystra: Goddess of Magic
+        - Tyr: God of Justice
+        - Tempus: God of War
+        - Sune: Goddess of Love and Beauty
+        - Seluene: Goddess of the Moon
+      Intermediate-Deities:
+        - Helm: God of Protection
+        - Lathander: God of Dawn and Renewal
+        - Kelemvor: God of the Dead
+        - Silvanus: God of Nature
+      Lesser-Deities:
+        - Mask: God of Thieves
+        - Tymora: Goddess of Luck
+        - Beshaba: Goddess of Misfortune
+      Dead-Gods:
+        - Myrkul: Former God of Death
+        - Bhaal: Former God of Murder
+
+    Extraplanar-Entities:
+      Celestials:
+        - Solar: Powerful angelic beings
+        - Planetar: Elite warriors of the Upper Planes
+        - Deva: Messengers and guardians
+      Fiends:
+        Devils:
+          - Pit Fiends: Rulers of the Nine Hells
+          - Erinyes: Fallen angels
+        Demons:
+          - Balor: Generals of the Abyss
+          - Marilith: Six-armed demon commanders
+      Elementals:
+        - Primordials: Ancient elemental beings
+        - Genies: Powerful elemental entities (Djinn, Efreet, Marid, Dao)
+      Fey:
+        - Archfey: Powerful rulers of the Feywild
+        - Eladrin: Fey elves
+        - Satyrs and Dryads: Nature spirits
+
+    Planes-Of-Existence:
+      Material-Plane: The primary world of mortals
+      Inner-Planes:
+        - Elemental Planes: Fire, Water, Air, Earth
+        - Energy Planes: Positive and Negative
+      Outer-Planes:
+        Upper-Planes:
+          - Mount Celestia: Realm of law and good
+          - Elysium: Realm of pure good
+        Lower-Planes:
+          - The Nine Hells: Realm of law and evil
+          - The Abyss: Realm of chaos and evil
+      Transitive-Planes:
+        - Astral Plane: Realm of thought and dreams
+        - Ethereal Plane: Realm of mists and ghosts
+      Mirror-Planes:
+        - Feywild: Magical reflection of the Material Plane
+        - Shadowfell: Dark reflection of the Material Plane
+
+    Magic:
+      Weave: The source of arcane magic, maintained by Mystra
+      Schools:
+        - Abjuration, Conjuration, Divination, Enchantment
+        - Evocation, Illusion, Necromancy, Transmutation
+      Types:
+        - Arcane: Wizards, Sorcerers, Warlocks
+        - Divine: Clerics, Paladins
+        - Primal: Druids, Rangers
+        - Psionic: Mind Flayers, some monsters
+
+    Major-Historical-Events:
+      - Time of Troubles: Gods walked the Material Plane
+      - Spellplague: Magical catastrophe caused by Mystra's death
+      - Sundering: Cosmic event reshaping reality
+
+    Current-World-State:
+      - Era of upheaval and change
+      - Rise of new threats and opportunities
+      - Shifting balance of power among nations and factions
+
+  Waterdeep:
+    Overview: >
+      Waterdeep, the City of Splendors, is the most influential and important city in the North and perhaps in all Faerûn. 
+      A bustling city of commerce and opportunity, it serves as a key location in many adventures.
+
+    Key-Features:
+      - Population: Approximately 130,000 permanent residents
+      - Government: Ruled by a council of masked Lords and the Open Lord
+      - Economy: Major trade hub for the Sword Coast
+      - Defenses: Powerful city guard and magical wards
+
+    Districts:
+      - Castle Ward: Government and administrative center
+      - Sea Ward: Wealthy residential area and home to many temples
+      - North Ward: Home to nobility and merchants
+      - Trades Ward: Center of commerce
+      - Southern Ward: Working class residential area
+      - Dock Ward: Maritime commerce and rough taverns
+      - Field Ward: Shantytown outside the city walls
+      - City of the Dead: Walled cemetery, quiet during the day but dangerous at night
+      - Undermountain: Vast dungeon complex beneath the city
+      - Skullport: Hidden port city deep in Undermountain
+
+    Important-Locations:
+      - Mount Waterdeep: Prominent mountain overlooking the city
+      - Yawning Portal Inn: Famous tavern built over an entrance to Undermountain
+      - Blackstaff Tower: Home of the Archmage of Waterdeep
+      - Castle Waterdeep: Fortress overlooking the city
+      - The Walking Statues: Massive stone constructs that defend the city
+
+    Factions:
+      - Lords of Waterdeep: Masked rulers of the city
+      - City Guard and City Watch: Law enforcement
+      - Harpers: Secret society working for good
+      - Zhentarim: Mercantile organization with a dark reputation
+      - Order of the Gauntlet: Paladins and clerics fighting evil
+      - Emerald Enclave: Druids and rangers protecting nature
+      - Force Grey: Elite adventurers serving the city
+
+    Culture:
+      - Diverse population including humans, dwarves, elves, and many other races
+      - Center of fashion, art, and magical innovation
+      - Home to many temples, including the Temple of Gond and the Plinth
+      - Famous for its festivals and celebrations
+
+    Economy:
+      - Major port city controlling trade along the Sword Coast
+      - Hub for overland trade routes
+      - Home to many guilds and mercantile companies
+      - Minting its own trade bars and coins
+
+    History:
+      - Founded over 1,000 years ago
+      - Built on the site of the ancient elven city of Aelinthaldaar
+      - Survived many threats including plagues, invasions, and internal strife
+
+    Current-Events:
+      - Tensions with Luskan over sea trade
+      - Rumors of corruption within the city's guilds
+      - Increased monster activity in Undermountain
+      - Growing influence of extraplanar entities
+
+    Connections-To-Story:
+      - Last stop before entering Undermountain
+      - Source of information and resources for the quest
+      - Potential allies or rivals among the city's factions
+      - Possible location of clues about the Celestial Codex
+
+    DM-Notes:
+      - Use Waterdeep as a central hub for the players
+      - Introduce faction intrigue to add depth to the city experience
+      - Consider urban adventures or side quests within the city
+      - Emphasize the contrast between the bustling city life and the dangers of Undermountain
+
+  Undermountain:
+    Overview: >
+      Undermountain is a vast dungeon complex beneath Mount Waterdeep, created over a thousand years ago by the wizard Halaster Blackcloak. It's known as the deadliest dungeon in the Forgotten Realms.
+
+    Key-Features:
+      - Massive size: Multiple levels extending deep into the earth
+      - Ever-changing layout: Halaster's magic constantly alters the dungeon
+      - Diverse inhabitants: From monsters to entire societies
+      - Magical anomalies: Due to a knot in the Weave of magic
+
+    History:
+      - Founded by Halaster Blackcloak and his seven apprentices
+      - Built over and expanded into the dwarven Underhalls
+      - Became Halaster's obsession, driving him to madness
+      - Now accessible through the Yawning Portal tavern in Waterdeep
+
+    Notable-Areas:
+      - The Yawning Portal: Entrance to Undermountain in Waterdeep
+      - Underhalls: Former dwarven mithral mine
+      - Halaster's tower ruins: Now beneath Waterdeep
+
+    Inhabitants:
+      - Monsters from various planes
+      - Remnants of drow and duergar societies
+      - Adventurers and explorers
+      - Halaster Blackcloak (location unknown)
+
+    Magical-Properties:
+      Weave-Knot:
+        Description: >
+          A permanent knot in the Weave of magic, created by an ancient elven spell
+        Effects:
+          - Can cause madness in long-term inhabitants
+          - Manifests as an obsession with Undermountain
+          - Affects both creatures and adventurers
+
+    Dangers:
+      - Unpredictable layout changes
+      - Powerful monsters and traps
+      - Risk of magical madness
+      - Halaster's unpredictable interventions
+
+    Opportunities:
+      - Ancient treasures and artifacts
+      - Forgotten knowledge and magic
+      - Challenges for adventurers of all levels
+
+    Connections-To-Story:
+      - Possible location of the Celestial Codex
+      - Last known domain of Halaster Blackcloak
+      - Major obstacle in the player characters' quest
+
+    DM-Notes:
+      - Use Undermountain to create a sense of mystery and danger
+      - Emphasize the risk of magical madness as characters delve deeper
+      - Introduce strange and otherworldly elements to reflect Halaster's planar connections
