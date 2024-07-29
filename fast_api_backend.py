@@ -9,7 +9,8 @@ import json
 import asyncio
 from contextlib import asynccontextmanager
 
-from virtual_game_master import VirtualGameMasterConfig, VirtualGameMaster, VirtualGameMasterChatAPISelector
+from virtual_game_master import VirtualGameMasterConfig, VirtualGameMaster
+from chat_api_selector import VirtualGameMasterChatAPISelector
 
 
 @dataclasses.dataclass
