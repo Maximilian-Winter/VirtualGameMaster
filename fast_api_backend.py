@@ -21,7 +21,7 @@ class State:
 async def lifespan(app: FastAPI):
     # Startup
     config = VirtualGameMasterConfig()
-    config.GAME_SAVE_FOLDER = "chat_history/new_game"
+    # config.GAME_SAVE_FOLDER = "chat_history/new_game"
     api_selector = VirtualGameMasterChatAPISelector(config)
     api = api_selector.get_api()
     app.state = State(rpg_app=VirtualGameMaster(config, api))

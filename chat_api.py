@@ -12,7 +12,12 @@ from llama_cpp_agent.providers import LlamaCppServerProvider, LlamaCppSamplingSe
 from llama_cpp_agent import MessagesFormatterType
 from llama_cpp_agent.messages_formatter import get_predefined_messages_formatter, PromptMarkers, MessagesFormatter
 from anthropic import Anthropic
-from typing import List, Dict, Generator, Union
+from typing import Union
+
+from mistralai.client import MistralClient
+from mistralai.models.chat_completion import ChatMessage
+
+from typing import List, Dict, Generator
 
 
 class ChatAPISettings(ABC):
@@ -401,7 +406,9 @@ class LlamaAgentProvider(ChatAPI):
             settings.stream = False
 
         response = self.provider.create_chat_completion(messages, self.structured_settings,
-                                                        LlamaCppSamplingSettings.load_from_dict(self.settings.to_dict()) if settings is None else LlamaCppSamplingSettings.load_from_dict(settings.to_dict()))
+                                                        LlamaCppSamplingSettings.load_from_dict(
+                                                            self.settings.to_dict()) if settings is None else LlamaCppSamplingSettings.load_from_dict(
+                                                            settings.to_dict()))
         return response['choices'][0][
             'message']['content']
 
@@ -411,7 +418,9 @@ class LlamaAgentProvider(ChatAPI):
             settings.stream = True
 
         for tok in self.provider.create_chat_completion(messages, self.structured_settings,
-                                                        LlamaCppSamplingSettings.load_from_dict(self.settings.to_dict()) if settings is None else LlamaCppSamplingSettings.load_from_dict(settings.to_dict())):
+                                                        LlamaCppSamplingSettings.load_from_dict(
+                                                            self.settings.to_dict()) if settings is None else LlamaCppSamplingSettings.load_from_dict(
+                                                            settings.to_dict())):
             if "content" in tok['choices'][0]['delta']:
                 text = tok['choices'][0]['delta']['content']
                 yield text
@@ -562,6 +571,7 @@ class GroqSettings(ChatAPISettings):
             'stop': self.stop
         }
 
+
 class GroqChatAPI(ChatAPI):
     def __init__(self, api_key: str, model: str):
         self.client = Groq(api_key=api_key)
@@ -596,6 +606,58 @@ class GroqChatAPI(ChatAPI):
 
     def get_default_settings(self):
         return GroqSettings()
+
+    def get_current_settings(self):
+        return self.settings
+
+
+class MistralSettings(ChatAPISettings):
+    def __init__(self):
+        self.temperature = 0.7
+        self.max_tokens = 1024
+        self.top_p = 1.0
+
+    def to_dict(self):
+        return {
+            'temperature': self.temperature,
+            'max_tokens': self.max_tokens,
+            'top_p': self.top_p
+        }
+
+
+class MistralChatAPI(ChatAPI):
+    def __init__(self, api_key: str, model: str):
+        self.client = MistralClient(api_key=api_key)
+        self.model = model
+        self.settings = MistralSettings()
+
+    def _convert_messages(self, messages: List[Dict[str, str]]) -> List[ChatMessage]:
+        return [ChatMessage(role=msg['role'], content=msg['content']) for msg in messages]
+
+    def get_response(self, messages: List[Dict[str, str]], settings=None) -> str:
+        chat_response = self.client.chat(
+            model=self.model,
+            messages=self._convert_messages(messages),
+            temperature=self.settings.temperature if settings is None else settings.temperature,
+            max_tokens=self.settings.max_tokens if settings is None else settings.max_tokens,
+            top_p=self.settings.top_p if settings is None else settings.top_p
+        )
+        return chat_response.choices[0].message.content
+
+    def get_streaming_response(self, messages: List[Dict[str, str]], settings=None) -> Generator[str, None, None]:
+        stream_response = self.client.chat_stream(
+            model=self.model,
+            messages=self._convert_messages(messages),
+            temperature=self.settings.temperature if settings is None else settings.temperature,
+            max_tokens=self.settings.max_tokens if settings is None else settings.max_tokens,
+            top_p=self.settings.top_p if settings is None else settings.top_p
+        )
+        for chunk in stream_response:
+            if chunk.choices[0].delta.content is not None:
+                yield chunk.choices[0].delta.content
+
+    def get_default_settings(self):
+        return MistralSettings()
 
     def get_current_settings(self):
         return self.settings

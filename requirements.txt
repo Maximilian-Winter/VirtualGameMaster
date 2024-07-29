@@ -5,3 +5,5 @@ PyYAML
 python-dotenv
 fastapi
 anthropic
+groq
+mistralai

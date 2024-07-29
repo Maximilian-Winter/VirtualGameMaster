@@ -5,6 +5,7 @@ Virtual Game Master is an innovative application that uses large language models
 ## Features
 
 - AI-powered game master using large language models
+- Supports llama.cpp server, Openrouter API, OpenAI-compatible APIs, Anthropic API, Groq API and MistralAI API
 - Command-line interface for text-based interaction
 - Web-based user interface for a more visual experience
 - Customizable game settings and scenarios
