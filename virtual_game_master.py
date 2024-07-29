@@ -160,14 +160,16 @@ class VirtualGameMaster:
         self.save()
 
     def save(self):
+        self.history.save_history()
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         save_id = f"{timestamp}"
         filename = f"save_state_{save_id}.json"
+
         save_data = {
+            "config": self.config.to_dict(),
             "settings": self.api.get_current_settings().to_dict(),
             "template_fields": self.game_state.template_fields,
-            "history_offset": self.history_offset,
-            "next_message_id": self.next_message_id
+            "history_offset": self.history_offset
         }
         with open(f"{self.config.GAME_SAVE_FOLDER}/{filename}", "w") as f:
             json.dump(save_data, f)
@@ -191,7 +193,7 @@ class VirtualGameMaster:
                 save_data = json.load(f)
             self.game_state.template_fields = save_data.get("template_fields", self.game_state.template_fields)
             self.history_offset = save_data.get("history_offset", 0)
-            self.next_message_id = save_data.get("next_message_id", self.next_message_id)
+            self.next_message_id = self.history.messages[-1].id + 1
             print(f"Loaded the most recent game state: {latest_save}")
         except (FileNotFoundError, json.JSONDecodeError) as e:
             print(f"Error loading save state: {e}. Starting a new game.")

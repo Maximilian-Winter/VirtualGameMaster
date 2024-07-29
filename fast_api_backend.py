@@ -67,6 +67,7 @@ async def send_message(message: Message):
 @app.post("/api/edit_message")
 async def edit_message(edit_message: EditMessage):
     success = app.state.rpg_app.edit_message(edit_message.id, edit_message.content)
+    app.state.rpg_app.save()
     if success:
         return {"status": "success"}
     else:
@@ -93,7 +94,17 @@ async def save_game():
 
 @app.get("/api/get_chat_history")
 async def get_chat_history():
-    return {"history": app.state.rpg_app.history.to_list()}
+    return {"history": app.state.rpg_app.history.to_list(), "next_message_id": app.state.rpg_app.next_message_id}
+
+
+@app.delete("/api/delete_message/{msg_id}")
+async def get_delete_message(msg_id: int):
+    result = app.state.rpg_app.history.delete_message(msg_id)
+    app.state.rpg_app.save()
+    if result:
+        return {"status": "success", "next_message_id": app.state.rpg_app.next_message_id}
+    else:
+        raise HTTPException(status_code=404, detail="Message not found")
 
 
 @app.websocket("/ws")
@@ -109,7 +120,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 await websocket.send_text(json.dumps({"type": "chunk", "content": chunk}))
                 await asyncio.sleep(0)  # Allow other tasks to run
 
-            await websocket.send_text(json.dumps({"type": "end", "should_exit": should_exit}))
+            await websocket.send_text(json.dumps({"type": "end", "should_exit": should_exit, "next_message_id": app.state.rpg_app.next_message_id}))
 
             if should_exit:
                 break

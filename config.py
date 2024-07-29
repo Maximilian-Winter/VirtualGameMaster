@@ -1,11 +1,5 @@
 import os
 import json
-from types import NoneType
-from typing import Any, Dict
-from dotenv import load_dotenv
-
-import os
-import json
 from typing import Any, Dict
 from dotenv import load_dotenv
 
@@ -84,3 +78,6 @@ class VirtualGameMasterConfig:
         for key, value in updates.items():
             if hasattr(self, key):
                 setattr(self, key, self._parse_value(key, value))
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {key: value for key, value in self.__dict__.items()}

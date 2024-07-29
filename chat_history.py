@@ -48,16 +48,6 @@ class ChatHistory:
     def to_list(self) -> List[Dict[str, Any]]:
         return [message.to_dict() for message in self.messages]
 
-    def assign_message_ids(self) -> None:
-        """Assign incremental IDs to messages that don't have them."""
-        next_id = 0
-        for message in self.messages:
-            if message.id is None:
-                message.id = next_id
-                next_id += 1
-            else:
-                next_id = max(next_id, message.id + 1)
-
     def save_history(self):
         if not os.path.exists(self.history_folder):
             os.makedirs(self.history_folder)
@@ -92,7 +82,7 @@ class ChatHistory:
                 loaded_history = json.load(f)
                 self.messages = [Message(msg['role'], msg['content'], msg.get('id')) for msg in loaded_history]
             print(f"Loaded the most recent chat history: {latest_history}")
-            self.assign_message_ids()  # Ensure all messages have IDs
+
         except (FileNotFoundError, json.JSONDecodeError) as e:
             print(f"Error loading chat history: {e}. Starting with an empty history.")
             self.messages = []
@@ -105,3 +95,10 @@ class ChatHistory:
             deleted = k
             self.messages = self.messages[:-k]
         return deleted
+
+    def delete_message(self, msg_id: int) -> int:
+        for msg in self.messages:
+            if msg.id == msg_id:
+                self.messages.remove(msg)
+                return True
+        return False
