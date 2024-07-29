@@ -103,12 +103,13 @@ class VirtualGameMaster:
         return self.format_history(history=history)
 
     def post_response(self, response: str) -> None:
-        self.history.add_message(Message("assistant", response.strip(), self.next_message_id))
-        self.next_message_id += 1
-        self.history.save_history()
+        if len(response.strip()) > 0:
+            self.history.add_message(Message("assistant", response.strip(), self.next_message_id))
+            self.next_message_id += 1
+            self.history.save_history()
 
-        if len(self.history.messages) - self.history_offset >= self.max_messages:
-            self.generate_save_state()
+            if len(self.history.messages) - self.history_offset >= self.max_messages:
+                self.generate_save_state()
 
     def edit_message(self, message_id: int, new_content: str) -> bool:
         success = self.history.edit_message(message_id, new_content)
