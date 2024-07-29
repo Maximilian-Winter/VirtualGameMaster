@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import {Send, Save, ChevronLeft, ChevronRight, Edit2, Check, Menu} from 'lucide-react';
+import { Send, Save, Menu, Edit2, Check } from 'lucide-react';
 import ChatMessage from './ChatMessage';
 import useWebSocket from './useWebSocket';
 
@@ -21,10 +21,10 @@ const RPGGameUI: React.FC = () => {
   const [gameInfo, setGameInfo] = useState<GameInfo>({});
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [userInput, setUserInput] = useState<string>('');
-  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
   const [editingGameInfoField, setEditingGameInfoField] = useState<string | null>(null);
   const [editedGameInfoContent, setEditedGameInfoContent] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<'chat' | 'gameState'>('chat');
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -180,146 +180,146 @@ const RPGGameUI: React.FC = () => {
       <div className="bg-[#0d1117] min-h-screen text-gray-300 flex flex-col">
         <header className="bg-[#161b22] p-4 shadow-md z-30 relative flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-100">Virtual-Game-Master</h1>
-          <button
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="lg:hidden bg-[#1c2128] hover:bg-[#2d333b] text-gray-300 p-2 rounded-full transition-colors"
-              aria-label="Toggle sidebar"
-          >
-            <Menu size={20} />
-          </button>
+          <div className="flex space-x-4">
+            <button
+                onClick={() => setActiveTab('chat')}
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                    activeTab === 'chat' ? 'bg-[#2d333b] text-white' : 'text-gray-400 hover:text-white'
+                }`}
+            >
+              Chat
+            </button>
+            <button
+                onClick={() => setActiveTab('gameState')}
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                    activeTab === 'gameState' ? 'bg-[#2d333b] text-white' : 'text-gray-400 hover:text-white'
+                }`}
+            >
+              Game State
+            </button>
+          </div>
         </header>
 
         <main className="flex-grow flex overflow-hidden relative">
-          {/* Sidebar */}
-          <aside
-              className={`bg-[#161b22] transition-all duration-300 ease-in-out ${
-                  isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-              } lg:translate-x-0 w-80 lg:w-96 xl:w-[480px] overflow-hidden flex flex-col fixed lg:relative left-0 top-0 bottom-0 z-20 h-full`}
-          >
-            <div className="p-4 border-b border-gray-700 flex justify-between items-center">
-              <h2 className="text-xl font-semibold text-gray-100">Game Information</h2>
-              <button
-                  onClick={() => setIsSidebarOpen(false)}
-                  className="lg:hidden text-gray-400 hover:text-gray-200"
-                  aria-label="Close sidebar"
-              >
-                <ChevronLeft size={20}/>
-              </button>
-            </div>
-            <div className="flex-grow overflow-y-auto p-4 space-y-4">
-              {Object.entries(gameInfo).map(([key, value]) => (
-                  <div key={key} className="bg-[#1c2128] p-4 rounded-lg">
-                    <div className="flex justify-between items-center mb-2">
-                      <h3 className="font-semibold text-gray-200">{key}</h3>
-                      {editingGameInfoField !== key && (
-                          <button
-                              onClick={() => handleEditGameInfoField(key)}
-                              className="text-gray-400 hover:text-gray-200 transition-colors"
-                              aria-label={`Edit ${key}`}
-                          >
-                            <Edit2 size={16}/>
-                          </button>
-                      )}
-                    </div>
-                    {editingGameInfoField === key ? (
-                        <div className="flex items-center mt-2">
-                    <textarea
-                        value={editedGameInfoContent}
-                        onChange={(e) => setEditedGameInfoContent(e.target.value)}
-                        className="flex-grow bg-[#0d1117] p-2 rounded-lg text-gray-200 resize-none"
-                        rows={5}
-                    />
-                          <button
-                              onClick={() => handleSaveEditedGameInfoField(key)}
-                              className="ml-2 bg-green-500 hover:bg-green-600 text-white p-2 rounded-lg transition-colors"
-                              aria-label={`Save ${key}`}
-                          >
-                            <Check size={16}/>
-                          </button>
+          {activeTab === 'chat' && (
+              <section className="flex-grow flex flex-col bg-[#0d1117] overflow-hidden relative w-full h-full">
+                <div className="flex-grow overflow-hidden p-4 pb-24">
+                  <div
+                      ref={chatContainerRef}
+                      className="h-full overflow-y-auto bg-[#1c2128] rounded-lg border border-gray-700 p-4"
+                  >
+                    {chatHistory.map((message, index) => (
+                        <ChatMessage
+                            key={message.id}
+                            message={message}
+                            onEdit={handleEditMessage}
+                            isGenerating={isGenerating}
+                            isLastMessage={index === chatHistory.length - 1}
+                        />
+                    ))}
+                    {isGenerating && (!chatHistory.length || chatHistory[chatHistory.length - 1].role !== 'assistant') && (
+                        <div className="flex gap-4 p-4 bg-[#2d333b] rounded-lg mb-4">
+                          <img
+                              className="h-10 w-10 rounded-full flex-shrink-0"
+                              src="https://dummyimage.com/256x256/354ea1/ffffff&text=GM"
+                              alt="Game Master"
+                          />
+                          <div className="flex flex-col flex-grow overflow-hidden">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="font-bold text-gray-200">Game Master</span>
+                              <span className="text-xs text-gray-400">{new Date().toLocaleString()}</span>
+                            </div>
+                            <div className="text-gray-200 whitespace-pre-wrap break-words overflow-auto">
+                              <span className="animate-pulse">▋</span>
+                            </div>
+                          </div>
                         </div>
-                    ) : (
-                        <pre className="text-gray-400 whitespace-pre-wrap break-words">{value}</pre>
                     )}
                   </div>
-              ))}
-            </div>
-            <div className="p-4 border-t border-gray-700">
-              <button
-                  onClick={handleSaveGame}
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition-colors flex items-center justify-center"
-              >
-                <Save size={18} className="mr-2"/>
-                Save Game
-              </button>
-            </div>
-          </aside>
-
-          {/* Chat Section */}
-          <section className="flex-grow flex flex-col bg-[#0d1117] overflow-hidden relative w-full h-full">
-            {/* Chat History Window */}
-            <div className="flex-grow overflow-hidden p-4 pb-24">
-              <div
-                  ref={chatContainerRef}
-                  className="h-full overflow-y-auto bg-[#1c2128] rounded-lg border border-gray-700 p-4"
-              >
-                {chatHistory.map((message, index) => (
-                    <ChatMessage
-                        key={message.id}
-                        message={message}
-                        onEdit={handleEditMessage}
-                        isGenerating={isGenerating}
-                        isLastMessage={index === chatHistory.length - 1}
-                    />
-                ))}
-                {isGenerating && (!chatHistory.length || chatHistory[chatHistory.length - 1].role !== 'assistant') && (
-                    <div className="flex gap-4 p-4 bg-[#2d333b] rounded-lg mb-4">
-                      <img
-                          className="h-10 w-10 rounded-full flex-shrink-0"
-                          src="https://dummyimage.com/256x256/354ea1/ffffff&text=GM"
-                          alt="Game Master"
-                      />
-                      <div className="flex flex-col flex-grow overflow-hidden">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="font-bold text-gray-200">Game Master</span>
-                          <span className="text-xs text-gray-400">{new Date().toLocaleString()}</span>
-                        </div>
-                        <div className="text-gray-200 whitespace-pre-wrap break-words overflow-auto">
-                          <span className="animate-pulse">▋</span>
-                        </div>
-                      </div>
-                    </div>
-                )}
-              </div>
-            </div>
-
-            {/* Fixed Input Area */}
-            <div className="fixed bottom-0 left-0 right-0 p-4 bg-[#0d1117] border-t border-gray-700">
-              <div className="max-w-4xl mx-auto">
-                <div className="flex items-start gap-4 bg-[#1c2128] rounded-lg overflow-hidden p-2">
-                <textarea
-                    ref={textareaRef}
-                    value={userInput}
-                    onChange={(e) => setUserInput(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    className="flex-grow bg-transparent p-3 focus:outline-none text-gray-200 resize-none min-h-[50px] max-h-[150px] overflow-y-auto"
-                    placeholder="Enter your message... (Shift+Enter for new line)"
-                    rows={1}
-                    disabled={isGenerating || !isConnected}
-                />
-                  <button
-                      onClick={handleSendMessage}
-                      className={`text-gray-400 hover:text-blue-500 p-3 mt-1 ${
-                          isGenerating || !isConnected ? 'opacity-50 cursor-not-allowed' : ''
-                      }`}
-                      title="Send"
-                      disabled={isGenerating || !isConnected}
-                  >
-                    <Send size={24} />
-                  </button>
                 </div>
-              </div>
-            </div>
-          </section>
+
+                <div className="fixed bottom-0 left-0 right-0 p-4 bg-[#0d1117] border-t border-gray-700">
+                  <div className="max-w-4xl mx-auto">
+                    <div className="flex items-start gap-4 bg-[#1c2128] rounded-lg overflow-hidden p-2">
+                  <textarea
+                      ref={textareaRef}
+                      value={userInput}
+                      onChange={(e) => setUserInput(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      className="flex-grow bg-transparent p-3 focus:outline-none text-gray-200 resize-none min-h-[50px] max-h-[150px] overflow-y-auto"
+                      placeholder="Enter your message... (Shift+Enter for new line)"
+                      rows={1}
+                      disabled={isGenerating || !isConnected}
+                  />
+                      <button
+                          onClick={handleSendMessage}
+                          className={`text-gray-400 hover:text-blue-500 p-3 mt-1 ${
+                              isGenerating || !isConnected ? 'opacity-50 cursor-not-allowed' : ''
+                          }`}
+                          title="Send"
+                          disabled={isGenerating || !isConnected}
+                      >
+                        <Send size={24} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </section>
+          )}
+
+          {activeTab === 'gameState' && (
+              <section className="flex-grow flex flex-col bg-[#0d1117] overflow-hidden relative w-full h-full p-4">
+                <div className="max-w-3xl mx-auto w-full">
+                  <h2 className="text-xl font-semibold text-gray-100 mb-4">Game Information</h2>
+                  <div className="space-y-4">
+                    {Object.entries(gameInfo).map(([key, value]) => (
+                        <div key={key} className="bg-[#1c2128] p-4 rounded-lg">
+                          <div className="flex justify-between items-center mb-2">
+                            <h3 className="font-semibold text-gray-200">{key}</h3>
+                            {editingGameInfoField !== key && (
+                                <button
+                                    onClick={() => handleEditGameInfoField(key)}
+                                    className="text-gray-400 hover:text-gray-200 transition-colors"
+                                    aria-label={`Edit ${key}`}
+                                >
+                                  <Edit2 size={16}/>
+                                </button>
+                            )}
+                          </div>
+                          {editingGameInfoField === key ? (
+                              <div className="flex items-center mt-2">
+                        <textarea
+                            value={editedGameInfoContent}
+                            onChange={(e) => setEditedGameInfoContent(e.target.value)}
+                            className="flex-grow bg-[#0d1117] p-2 rounded-lg text-gray-200 resize-none"
+                            rows={5}
+                        />
+                                <button
+                                    onClick={() => handleSaveEditedGameInfoField(key)}
+                                    className="ml-2 bg-green-500 hover:bg-green-600 text-white p-2 rounded-lg transition-colors"
+                                    aria-label={`Save ${key}`}
+                                >
+                                  <Check size={16}/>
+                                </button>
+                              </div>
+                          ) : (
+                              <pre className="text-gray-400 whitespace-pre-wrap break-words">{value}</pre>
+                          )}
+                        </div>
+                    ))}
+                  </div>
+                  <div className="mt-6">
+                    <button
+                        onClick={handleSaveGame}
+                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition-colors flex items-center justify-center"
+                    >
+                      <Save size={18} className="mr-2"/>
+                      Save Game
+                    </button>
+                  </div>
+                </div>
+              </section>
+          )}
         </main>
       </div>
   );
