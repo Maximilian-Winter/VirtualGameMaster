@@ -2,9 +2,9 @@ import dataclasses
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+
 from pydantic import BaseModel
-from typing import Dict, List
+from typing import Dict
 import json
 import asyncio
 from contextlib import asynccontextmanager
@@ -75,12 +75,12 @@ async def edit_message(edit_message: EditMessage):
 
 @app.get("/api/get_template_fields")
 async def get_template_fields():
-    return {"fields": app.state.rpg_app.template_fields}
+    return {"fields": app.state.rpg_app.game_state.template_fields}
 
 
 @app.post("/api/update_template_fields")
 async def update_template_fields(fields: TemplateFields):
-    app.state.rpg_app.template_fields.update(fields.fields)
+    app.state.rpg_app.game_state.template_fields.update(fields.fields)
     app.state.rpg_app.save()
     return {"status": "success"}
 
