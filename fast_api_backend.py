@@ -21,8 +21,7 @@ class State:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    config = VirtualGameMasterConfig()
-    # config.GAME_SAVE_FOLDER = "chat_history/new_game"
+    config = VirtualGameMasterConfig.from_env()
     api_selector = VirtualGameMasterChatAPISelector(config)
     api = api_selector.get_api()
     app.state = State(rpg_app=VirtualGameMaster(config, api))
@@ -122,9 +121,6 @@ async def async_generator(sync_generator):
         yield item
         await asyncio.sleep(0)  # Allow other tasks to run
 
-
-# Mount the static files after all other routes
-# app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
 if __name__ == "__main__":
     import uvicorn
