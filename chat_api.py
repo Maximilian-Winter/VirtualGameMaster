@@ -20,6 +20,16 @@ from mistralai.models.chat_completion import ChatMessage
 from typing import List, Dict, Generator
 
 
+def clean_history_messages(history_messages: List[dict]) -> List[dict]:
+    clean_messages = []
+    for msg in history_messages:
+        if "id" in msg:
+            msg.pop("id")
+        clean_messages.append(msg)
+
+    return clean_messages
+
+
 class ChatAPISettings(ABC):
     @abstractmethod
     def to_dict(self):
@@ -68,7 +78,7 @@ class OpenAIChatAPI(ChatAPI):
     def get_response(self, messages: List[Dict[str, str]], settings=None) -> str:
         response = self.client.chat.completions.create(
             model=self.model,
-            messages=messages,
+            messages=clean_history_messages(messages),
             max_tokens=self.settings.max_tokens,
             temperature=self.settings.temperature if settings is None else settings.temperature,
             top_p=self.settings.top_p if settings is None else settings.top_p
@@ -78,7 +88,7 @@ class OpenAIChatAPI(ChatAPI):
     def get_streaming_response(self, messages: List[Dict[str, str]], settings=None) -> Generator[str, None, None]:
         stream = self.client.chat.completions.create(
             model=self.model,
-            messages=messages,
+            messages=clean_history_messages(messages),
             max_tokens=self.settings.max_tokens,
             stream=True,
             temperature=self.settings.temperature if settings is None else settings.temperature,
@@ -133,7 +143,7 @@ class OpenRouterAPI(ChatAPI):
     def _prepare_request_body(self, messages: List[Dict[str, str]], stream: bool = False, settings=None) -> Dict:
         body = {
             "model": self.model,
-            "messages": messages,
+            "messages": clean_history_messages(messages),
             "stream": stream,
             "stop": ["</s>", "[INST]", "[/INST]"],
             "temperature": self.settings.temperature if settings is None else settings.temperature,
@@ -276,62 +286,6 @@ class OpenRouterAPIPromptMode(ChatAPI):
 
 
 class LlamaCppSettings(ChatAPISettings):
-    """
-    Settings for generating completions using the Llama.cpp server.
-
-    Args:
-        temperature (float): Controls the randomness of the generated completions. Higher values make the output more random.
-        top_k (int): Controls the diversity of the top-k sampling. Higher values result in more diverse completions.
-        top_p (float): Controls the diversity of the nucleus sampling. Higher values result in more diverse completions.
-        min_p (float): Minimum probability for nucleus sampling. Lower values result in more focused completions.
-        n_predict (int): Number of completions to predict. Set to -1 to use the default value.
-        n_keep (int): Number of completions to keep. Set to 0 for all predictions.
-        stream (bool): Enable streaming for long completions.
-        additional_stop_sequences (List[str]): List of stop sequences to finish completion generation. The official stop sequences of the model get added automatically.
-        tfs_z (float): Controls the temperature for top frequent sampling.
-        typical_p (float): Typical probability for top frequent sampling.
-        repeat_penalty (float): Penalty for repeating tokens in completions.
-        repeat_last_n (int): Number of tokens to consider for repeat penalty.
-        penalize_nl (bool): Enable penalizing newlines in completions.
-        presence_penalty (float): Penalty for presence of certain tokens.
-        frequency_penalty (float): Penalty based on token frequency.
-        penalty_prompt (Union[None, str, List[int]]): Prompts to apply penalty for certain tokens.
-        mirostat_mode (int): Mirostat level.
-        mirostat_tau (float): Mirostat temperature.
-        mirostat_eta (float): Mirostat eta parameter.
-        seed (int): Seed for randomness. Set to -1 for no seed.
-        ignore_eos (bool): Ignore end-of-sequence token.
-
-    Attributes:
-        temperature (float): Controls the randomness of the generated completions. Higher values make the output more random.
-        top_k (int): Controls the diversity of the top-k sampling. Higher values result in more diverse completions.
-        top_p (float): Controls the diversity of the nucleus sampling. Higher values result in more diverse completions.
-        min_p (float): Minimum probability for nucleus sampling. Lower values result in more focused completions.
-        n_predict (int): Number of completions to predict. Set to -1 to use the default value.
-        n_keep (int): Number of completions to keep. Set to 0 for all predictions.
-        stream (bool): Enable streaming for long completions.
-        additional_stop_sequences (List[str]): List of stop sequences to finish completion generation. The official stop sequences of the model get added automatically.
-        tfs_z (float): Controls the temperature for top frequent sampling.
-        typical_p (float): Typical probability for top frequent sampling.
-        repeat_penalty (float): Penalty for repeating tokens in completions.
-        repeat_last_n (int): Number of tokens to consider for repeat penalty.
-        penalize_nl (bool): Enable penalizing newlines in completions.
-        presence_penalty (float): Penalty for presence of certain tokens.
-        frequency_penalty (float): Penalty based on token frequency.
-        penalty_prompt (Union[None, str, List[int]]): Prompts to apply penalty for certain tokens.
-        mirostat_mode (int): Mirostat level.
-        mirostat_tau (float): Mirostat temperature.
-        mirostat_eta (float): Mirostat eta parameter.
-        seed (int): Seed for randomness. Set to -1 for no seed.
-        ignore_eos (bool): Ignore end-of-sequence token.
-    Methods:
-        save(file_path: str): Save the settings to a file.
-        load_from_file(file_path: str) -> LlamaCppServerGenerationSettings: Load the settings from a file.
-        load_from_dict(settings: dict) -> LlamaCppServerGenerationSettings: Load the settings from a dictionary.
-        as_dict() -> dict: Convert the settings to a dictionary.
-
-    """
-
     temperature: float = 0.8
     top_k: int = 40
     top_p: float = 0.95
@@ -405,7 +359,7 @@ class LlamaAgentProvider(ChatAPI):
         if settings is not None:
             settings.stream = False
 
-        response = self.provider.create_chat_completion(messages, self.structured_settings,
+        response = self.provider.create_chat_completion(clean_history_messages(messages), self.structured_settings,
                                                         LlamaCppSamplingSettings.load_from_dict(
                                                             self.settings.to_dict()) if settings is None else LlamaCppSamplingSettings.load_from_dict(
                                                             settings.to_dict()))
@@ -417,7 +371,7 @@ class LlamaAgentProvider(ChatAPI):
         if settings is not None:
             settings.stream = True
 
-        for tok in self.provider.create_chat_completion(messages, self.structured_settings,
+        for tok in self.provider.create_chat_completion(clean_history_messages(messages), self.structured_settings,
                                                         LlamaCppSamplingSettings.load_from_dict(
                                                             self.settings.to_dict()) if settings is None else LlamaCppSamplingSettings.load_from_dict(
                                                             settings.to_dict())):
@@ -513,6 +467,7 @@ class AnthropicChatAPI(ChatAPI):
     def _prepare_messages(self, messages: List[Dict[str, str]]) -> tuple:
         system_message = None
         other_messages = []
+        messages = clean_history_messages(messages)
         for message in messages:
             cleaned_message = {k: v for k, v in message.items() if k != 'id'}
             if cleaned_message['role'] == 'system':
@@ -580,7 +535,7 @@ class GroqChatAPI(ChatAPI):
 
     def get_response(self, messages: List[Dict[str, str]], settings=None) -> str:
         chat_completion = self.client.chat.completions.create(
-            messages=messages,
+            messages=clean_history_messages(messages),
             model=self.model,
             temperature=self.settings.temperature if settings is None else settings.temperature,
             max_tokens=self.settings.max_tokens if settings is None else settings.max_tokens,
@@ -592,7 +547,7 @@ class GroqChatAPI(ChatAPI):
 
     def get_streaming_response(self, messages: List[Dict[str, str]], settings=None) -> Generator[str, None, None]:
         stream = self.client.chat.completions.create(
-            messages=messages,
+            messages=clean_history_messages(messages),
             model=self.model,
             temperature=self.settings.temperature if settings is None else settings.temperature,
             max_tokens=self.settings.max_tokens if settings is None else settings.max_tokens,
