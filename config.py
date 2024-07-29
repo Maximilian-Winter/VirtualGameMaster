@@ -18,7 +18,6 @@ class VirtualGameMasterConfig:
         self.KEPT_MESSAGES: int = 0
         self.SYSTEM_MESSAGE_FILE: str = ""
         self.SAVE_SYSTEM_MESSAGE_FILE: str = ""
-        self.SAVE_REMINDER_MESSAGE_FILE: str = ""
         self.MAX_TOKENS: int = 0
         self.API_TYPE: str = "openai"
         self.API_KEY: str | None = None
@@ -41,7 +40,6 @@ class VirtualGameMasterConfig:
         config.KEPT_MESSAGES = int(os.getenv("KEPT_MESSAGES"))
         config.SYSTEM_MESSAGE_FILE = os.getenv("SYSTEM_MESSAGE_FILE")
         config.SAVE_SYSTEM_MESSAGE_FILE = os.getenv("SAVE_SYSTEM_MESSAGE_FILE")
-        config.SAVE_REMINDER_MESSAGE_FILE = os.getenv("SAVE_REMINDER_MESSAGE_FILE")
         config.MAX_TOKENS = int(os.getenv("MAX_TOKENS_PER_RESPONSE"))
         config.API_TYPE = os.getenv("API_TYPE", "openai").lower()
         config.API_KEY = os.getenv("API_KEY", None)
