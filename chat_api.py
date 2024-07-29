@@ -2,6 +2,7 @@ import json
 from abc import ABC, abstractmethod
 
 import requests
+from groq import Groq
 
 from openai import OpenAI
 
@@ -410,7 +411,7 @@ class LlamaAgentProvider(ChatAPI):
             settings.stream = True
 
         for tok in self.provider.create_chat_completion(messages, self.structured_settings,
-                                                        self.settings if settings is None else settings):
+                                                        LlamaCppSamplingSettings.load_from_dict(self.settings.to_dict()) if settings is None else LlamaCppSamplingSettings.load_from_dict(settings.to_dict())):
             if "content" in tok['choices'][0]['delta']:
                 text = tok['choices'][0]['delta']['content']
                 yield text
@@ -541,6 +542,60 @@ class AnthropicChatAPI(ChatAPI):
 
     def get_default_settings(self):
         return AnthropicSettings()
+
+    def get_current_settings(self):
+        return self.settings
+
+
+class GroqSettings(ChatAPISettings):
+    def __init__(self):
+        self.temperature = 0.5
+        self.max_tokens = 1024
+        self.top_p = 1
+        self.stop = None
+
+    def to_dict(self):
+        return {
+            'temperature': self.temperature,
+            'max_tokens': self.max_tokens,
+            'top_p': self.top_p,
+            'stop': self.stop
+        }
+
+class GroqChatAPI(ChatAPI):
+    def __init__(self, api_key: str, model: str):
+        self.client = Groq(api_key=api_key)
+        self.model = model
+        self.settings = GroqSettings()
+
+    def get_response(self, messages: List[Dict[str, str]], settings=None) -> str:
+        chat_completion = self.client.chat.completions.create(
+            messages=messages,
+            model=self.model,
+            temperature=self.settings.temperature if settings is None else settings.temperature,
+            max_tokens=self.settings.max_tokens if settings is None else settings.max_tokens,
+            top_p=self.settings.top_p if settings is None else settings.top_p,
+            stop=self.settings.stop if settings is None else settings.stop,
+            stream=False
+        )
+        return chat_completion.choices[0].message.content
+
+    def get_streaming_response(self, messages: List[Dict[str, str]], settings=None) -> Generator[str, None, None]:
+        stream = self.client.chat.completions.create(
+            messages=messages,
+            model=self.model,
+            temperature=self.settings.temperature if settings is None else settings.temperature,
+            max_tokens=self.settings.max_tokens if settings is None else settings.max_tokens,
+            top_p=self.settings.top_p if settings is None else settings.top_p,
+            stop=self.settings.stop if settings is None else settings.stop,
+            stream=True
+        )
+        for chunk in stream:
+            if chunk.choices[0].delta.content is not None:
+                yield chunk.choices[0].delta.content
+
+    def get_default_settings(self):
+        return GroqSettings()
 
     def get_current_settings(self):
         return self.settings

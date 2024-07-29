@@ -1,6 +1,6 @@
-from chat_api import ChatAPI, OpenAIChatAPI, OpenRouterAPI, OpenRouterAPIPromptMode, LlamaAgentProvider, LlamaAgentProviderCustom, AnthropicChatAPI
-from virtual_game_master import VirtualGameMasterConfig
+from chat_api import ChatAPI, OpenAIChatAPI, OpenRouterAPI, OpenRouterAPIPromptMode, LlamaAgentProvider, LlamaAgentProviderCustom, AnthropicChatAPI, GroqChatAPI
 
+from virtual_game_master import VirtualGameMasterConfig
 
 class VirtualGameMasterChatAPISelector:
     def __init__(self, config: VirtualGameMasterConfig):
@@ -49,6 +49,12 @@ class VirtualGameMasterChatAPISelector:
             return api
         elif self.config.API_TYPE == "anthropic":
             api = AnthropicChatAPI(self.config.API_KEY, self.config.MODEL)
+            api.settings.temperature = self.config.TEMPERATURE
+            api.settings.top_p = self.config.TOP_P
+            api.settings.max_tokens = self.config.MAX_TOKENS
+            return api
+        elif self.config.API_TYPE == "groq":  # Add the new condition for Groq
+            api = GroqChatAPI(self.config.API_KEY, self.config.MODEL)
             api.settings.temperature = self.config.TEMPERATURE
             api.settings.top_p = self.config.TOP_P
             api.settings.max_tokens = self.config.MAX_TOKENS
