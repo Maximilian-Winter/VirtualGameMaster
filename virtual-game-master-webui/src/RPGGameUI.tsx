@@ -3,6 +3,7 @@ import useWebSocket from './useWebSocket';
 import ChatTab from './ChatTab';
 import GameStateTab from './GameStateTab';
 import { ChatMessageType, GameInfo } from "./types";
+import ConfigTab from "./ConfigTab";
 
 const BACKEND_URL = 'http://localhost:8000';
 const WS_URL = 'ws://localhost:8000/ws';
@@ -14,8 +15,9 @@ const RPGGameUI: React.FC = () => {
   const [editingGameInfoField, setEditingGameInfoField] = useState<string | null>(null);
   const [editedGameInfoContent, setEditedGameInfoContent] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<'chat' | 'gameState'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'gameState' | 'config'>('chat');
   const [nextMessageId, setNextMessageId] = useState<number>(0);
+  const [config, setConfig] = useState<Record<string, any>>({});
 
   const handleWebSocketMessage = useCallback((data: any) => {
     if (data.type === 'chunk') {
@@ -55,9 +57,38 @@ const RPGGameUI: React.FC = () => {
     onMessage: handleWebSocketMessage,
   });
 
+  const fetchConfig = async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/get_config`);
+      const data = await response.json();
+      setConfig(data.config);
+    } catch (error) {
+      console.error('Failed to fetch configuration:', error);
+    }
+  };
+
+  const handleSaveConfig = async (newConfig: Record<string, any>) => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/update_config`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ config: newConfig }),
+      });
+      const data = await response.json();
+      if (data.status === 'success') {
+        setConfig(newConfig);
+        alert('Configuration saved successfully!');
+      }
+    } catch (error) {
+      console.error('Failed to save configuration:', error);
+      alert('Failed to save configuration. Please try again.');
+    }
+  };
+
   useEffect(() => {
     fetchGameInfo();
     fetchChatHistory();
+    fetchConfig();
   }, []);
 
   const fetchGameInfo = async (): Promise<void> => {
@@ -210,6 +241,14 @@ const RPGGameUI: React.FC = () => {
             >
               Game State
             </button>
+            <button
+                onClick={() => setActiveTab('config')}
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                    activeTab === 'config' ? 'bg-[#2d333b] text-white' : 'text-gray-400 hover:text-white'
+                }`}
+            >
+              Config
+            </button>
           </div>
         </header>
 
@@ -237,6 +276,13 @@ const RPGGameUI: React.FC = () => {
                   handleSaveEditedGameInfoField={handleSaveEditedGameInfoField}
                   setEditedGameInfoContent={setEditedGameInfoContent}
                   handleSaveGame={handleSaveGame}
+              />
+          )}
+
+          {activeTab === 'config' && (
+              <ConfigTab
+                  config={config}
+                  onSaveConfig={handleSaveConfig}
               />
           )}
         </main>

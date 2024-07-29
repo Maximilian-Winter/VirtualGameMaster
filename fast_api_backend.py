@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
 from pydantic import BaseModel
-from typing import Dict
+from typing import Dict, Union
 import json
 import asyncio
 from contextlib import asynccontextmanager
@@ -16,6 +16,10 @@ from chat_api_selector import VirtualGameMasterChatAPISelector
 @dataclasses.dataclass
 class State:
     rpg_app: VirtualGameMaster
+
+
+class ConfigUpdate(BaseModel):
+    config: Dict[str, Union[int, float, str]]
 
 
 @asynccontextmanager
@@ -107,6 +111,21 @@ async def get_delete_message(msg_id: int):
         raise HTTPException(status_code=404, detail="Message not found")
 
 
+@app.get("/api/get_config")
+async def get_config():
+    return {"config": app.state.rpg_app.config.to_dict()}
+
+@app.post("/api/update_config")
+async def update_config(config_update: ConfigUpdate):
+    try:
+        app.state.rpg_app.config.update(config_update.config)
+        app.state.rpg_app.config.to_env()  # Save to .env file
+        app.state.rpg_app.config.to_json("config.json")  # Save to JSON file
+        return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
@@ -120,7 +139,8 @@ async def websocket_endpoint(websocket: WebSocket):
                 await websocket.send_text(json.dumps({"type": "chunk", "content": chunk}))
                 await asyncio.sleep(0)  # Allow other tasks to run
 
-            await websocket.send_text(json.dumps({"type": "end", "should_exit": should_exit, "next_message_id": app.state.rpg_app.next_message_id}))
+            await websocket.send_text(json.dumps(
+                {"type": "end", "should_exit": should_exit, "next_message_id": app.state.rpg_app.next_message_id}))
 
             if should_exit:
                 break

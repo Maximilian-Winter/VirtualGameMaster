@@ -98,8 +98,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                     </button>
                   </>
               )}
-                    {isLastMessage && message.role === 'assistant' && (
-                        <>
+              {isLastMessage && message.role === 'assistant' && (
+                  <>
                     <button
                         className="text-gray-400 hover:text-green-500"
                         title="Regenerate"
