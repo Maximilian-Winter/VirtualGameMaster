@@ -140,19 +140,11 @@ class VirtualGameMaster:
             CHAT_HISTORY=formatted_chat)
 
         print(prompt)
-        settings = self.api.get_default_settings()
-        settings.temperature = 0.65
 
-        settings.top_p = 0.95
-        settings.top_k = 50
-        settings.min_p = 0.05
-        settings.tfs_z = 0.9
-
-        settings.max_tokens = 4096
         prompt_message = [{"role": "system",
                            "content": "You are an AI assistant tasked with updating the game state of a text-based role-playing game."},
                           {"role": "user", "content": prompt}]
-        response_gen = self.api.get_streaming_response(prompt_message, settings)
+        response_gen = self.api.get_streaming_response(prompt_message)
 
         full_response = ""
         for response_chunk in response_gen:
