@@ -1,5 +1,6 @@
 .env
 .env_openai
+.env.groq
 testus2.py
 __pycache__/
 /__pycache__
