@@ -11,9 +11,8 @@ def display_recent_messages(app: VirtualGameMaster, num_messages: int = 4):
 
 def run_cli(app: VirtualGameMaster):
     app.load()
-    print("Welcome to the RPG App! Type 'exit' to quit or 'save' to manually save the game.")
+    print("Welcome to the Virtual Game Master App! Type in your next message to the Game Master or use '" + app.config.COMMAND_PREFIX + "help' to show all available commands.")
     print("Use '+' at the end of a line to continue input on the next line.")
-    print("Available commands: @save @exit @view_fields, @edit_field, @view_messages, @edit_message")
 
     display_recent_messages(app)
     while True:
@@ -44,7 +43,8 @@ def run_cli(app: VirtualGameMaster):
 # Usage
 if __name__ == "__main__":
     config = VirtualGameMasterConfig.from_env()
+    # config.GAME_SAVE_FOLDER = "chat_history/new_gameNemo2"
     api_selector = VirtualGameMasterChatAPISelector(config)
     api = api_selector.get_api()
-    app = VirtualGameMaster(config, api, False)
-    run_cli(app)
+    vgm_app = VirtualGameMaster(config, api, False)
+    run_cli(vgm_app)

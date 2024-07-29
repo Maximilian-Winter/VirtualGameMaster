@@ -17,6 +17,7 @@ import commands
 class VirtualGameMaster:
     def __init__(self, config: VirtualGameMasterConfig, api: ChatAPI, debug_mode: bool = False):
         self.config = config
+        CommandSystem.command_prefix = self.config.COMMAND_PREFIX
         self.api = api
         self.system_message_template = MessageTemplate.from_file(
             config.SYSTEM_MESSAGE_FILE
@@ -37,11 +38,8 @@ class VirtualGameMaster:
     def process_input(self, user_input: str, stream: bool) -> Tuple[str, bool] | Tuple[
         Generator[str, None, None], bool]:
 
-        if user_input.startswith("@"):
-            command_parts = user_input[1:].split()
-            command = command_parts[0]
-            args = command_parts[1:]
-            return CommandSystem.handle_command(self, command, *args)
+        if user_input.startswith(CommandSystem.command_prefix):
+            return CommandSystem.handle_command(self, user_input)
 
         if stream:
             return self.get_streaming_response(user_input), False
@@ -69,13 +67,40 @@ class VirtualGameMaster:
         history = self.history.to_list()
         history = history[self.history_offset:]
         history.insert(0, {"role": "system",
-                           "content": self.system_message_template.generate_message_content(
-                               self.game_state.template_fields).strip()})
+                           "content": self.get_current_system_message()})
 
         if self.debug_mode:
             print(history[0]["content"])
 
         return history
+
+    def get_current_system_message(self):
+        return self.system_message_template.generate_message_content(
+            self.game_state.template_fields).strip()
+
+    def format_history(self, history: list[dict[str, str]]) -> str:
+        template = "{role}: {content}\n\n"
+        role_names = {
+            "assistant": "Game Master",
+            "user": "Player"
+        }
+        formatter = ChatFormatter(template, role_names)
+
+        if len(history) > 0:
+            output = "History:\n"
+            output += formatter.format_messages(history)
+        else:
+            output = "History is empty.\n"
+
+        return output
+
+    def get_complete_history_formatted(self):
+        history = self.history.to_list()
+        return self.format_history(history=history)
+
+    def get_current_history_formatted(self):
+        history = self.get_currently_used_history()
+        return self.format_history(history=history)
 
     def post_response(self, response: str) -> None:
         self.history.add_message(Message("assistant", response.strip(), self.next_message_id))
@@ -123,7 +148,9 @@ class VirtualGameMaster:
         settings.tfs_z = 0.9
 
         settings.max_tokens = 4096
-        prompt_message = [{"role": "system", "content": "You are an AI assistant tasked with updating the game state of a text-based role-playing game."}, {"role": "user", "content": prompt}]
+        prompt_message = [{"role": "system",
+                           "content": "You are an AI assistant tasked with updating the game state of a text-based role-playing game."},
+                          {"role": "user", "content": prompt}]
         response_gen = self.api.get_streaming_response(prompt_message, settings)
 
         full_response = ""
