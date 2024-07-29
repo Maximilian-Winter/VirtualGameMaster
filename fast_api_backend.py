@@ -4,8 +4,9 @@ from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
 from pydantic import BaseModel
-from typing import Dict, Union
+from typing import Dict
 import json
+import os
 import asyncio
 from contextlib import asynccontextmanager
 
@@ -13,13 +14,42 @@ from virtual_game_master import VirtualGameMasterConfig, VirtualGameMaster
 from chat_api_selector import VirtualGameMasterChatAPISelector
 
 
+class ConfigUpdate(BaseModel):
+    GAME_SAVE_FOLDER: str
+    INITIAL_GAME_STATE: str
+    TEMPERATURE: float
+    TOP_P: float
+    TOP_K: int
+    MIN_P: float
+    TFS_Z: float
+
+    def to_dict(self):
+        return {
+            "GAME_SAVE_FOLDER": self.GAME_SAVE_FOLDER,
+            "INITIAL_GAME_STATE": self.INITIAL_GAME_STATE,
+            "TEMPERATURE": self.TEMPERATURE,
+            "TOP_P": self.TOP_P,
+            "TOP_K": self.TOP_K,
+            "MIN_P": self.MIN_P,
+            "TFS_Z": self.TFS_Z,
+        }
+
+class Message(BaseModel):
+    content: str
+
+
+class EditMessage(BaseModel):
+    id: int
+    content: str
+
+
+class TemplateFields(BaseModel):
+    fields: Dict[str, str]
+
+
 @dataclasses.dataclass
 class State:
     rpg_app: VirtualGameMaster
-
-
-class ConfigUpdate(BaseModel):
-    config: Dict[str, Union[int, float, str]]
 
 
 @asynccontextmanager
@@ -46,19 +76,6 @@ app.add_middleware(
     allow_methods=["*"],  # Allows all methods
     allow_headers=["*"],  # Allows all headers
 )
-
-
-class Message(BaseModel):
-    content: str
-
-
-class EditMessage(BaseModel):
-    id: int
-    content: str
-
-
-class TemplateFields(BaseModel):
-    fields: Dict[str, str]
 
 
 @app.post("/api/send_message")
@@ -113,17 +130,60 @@ async def get_delete_message(msg_id: int):
 
 @app.get("/api/get_config")
 async def get_config():
-    return {"config": app.state.rpg_app.config.to_dict()}
+    return {
+        "GAME_SAVE_FOLDER": app.state.rpg_app.config.GAME_SAVE_FOLDER,
+        "INITIAL_GAME_STATE": app.state.rpg_app.config.INITIAL_GAME_STATE,
+        "TEMPERATURE": app.state.rpg_app.config.TEMPERATURE,
+        "TOP_P": app.state.rpg_app.config.TOP_P,
+        "TOP_K": app.state.rpg_app.config.TOP_K,
+        "MIN_P": app.state.rpg_app.config.MIN_P,
+        "TFS_Z": app.state.rpg_app.config.TFS_Z,
+    }
+
 
 @app.post("/api/update_config")
 async def update_config(config_update: ConfigUpdate):
     try:
-        app.state.rpg_app.config.update(config_update.config)
-        app.state.rpg_app.config.to_env()  # Save to .env file
-        app.state.rpg_app.config.to_json("config.json")  # Save to JSON file
+
+        app.state.rpg_app.config.update(config_update.to_dict())
+        config = app.state.rpg_app.config
+        api_selector = VirtualGameMasterChatAPISelector(config)
+        api = api_selector.get_api()
+        app.state = State(rpg_app=VirtualGameMaster(config, api))
+        app.state.rpg_app.load()
         return {"status": "success"}
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/save_config")
+async def save_config(config_update: ConfigUpdate):
+    try:
+
+        app.state.rpg_app.config.update(config_update.to_dict())
+        app.state.rpg_app.config.to_env()
+
+        config = VirtualGameMasterConfig.from_env()
+        api_selector = VirtualGameMasterChatAPISelector(config)
+        api = api_selector.get_api()
+        app.state = State(rpg_app=VirtualGameMaster(config, api))
+        app.state.rpg_app.load()
+        return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/get_chat_history_folders")
+async def get_chat_history_folders():
+    chat_history_path = os.path.join(os.path.dirname(__file__), "chat_history")
+    folders = [os.path.join("chat_history", f) for f in os.listdir(chat_history_path) if os.path.isdir(os.path.join(chat_history_path, f))]
+    return {"folders": folders}
+
+
+@app.get("/api/get_game_starters")
+async def get_game_starters():
+    game_starters_path = os.path.join(os.path.dirname(__file__), "game_starters")
+    starters = [os.path.join("game_starters", f) for f in os.listdir(game_starters_path) if f.endswith(".yaml")]
+    return {"game_starters": starters}
 
 
 @app.websocket("/ws")

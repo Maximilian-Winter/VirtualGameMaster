@@ -17,7 +17,15 @@ const RPGGameUI: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'chat' | 'gameState' | 'config'>('chat');
   const [nextMessageId, setNextMessageId] = useState<number>(0);
-  const [config, setConfig] = useState<Record<string, any>>({});
+  const [config, setConfig] = useState({
+    GAME_SAVE_FOLDER: '',
+    INITIAL_GAME_STATE: '',
+    TEMPERATURE: 0.7,
+    TOP_P: 1.0,
+    TOP_K: 0,
+    MIN_P: 0.0,
+    TFS_Z: 1.0,
+  });
 
   const handleWebSocketMessage = useCallback((data: any) => {
     if (data.type === 'chunk') {
@@ -57,34 +65,6 @@ const RPGGameUI: React.FC = () => {
     onMessage: handleWebSocketMessage,
   });
 
-  const fetchConfig = async () => {
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/get_config`);
-      const data = await response.json();
-      setConfig(data.config);
-    } catch (error) {
-      console.error('Failed to fetch configuration:', error);
-    }
-  };
-
-  const handleSaveConfig = async (newConfig: Record<string, any>) => {
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/update_config`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ config: newConfig }),
-      });
-      const data = await response.json();
-      if (data.status === 'success') {
-        setConfig(newConfig);
-        alert('Configuration saved successfully!');
-      }
-    } catch (error) {
-      console.error('Failed to save configuration:', error);
-      alert('Failed to save configuration. Please try again.');
-    }
-  };
-
   useEffect(() => {
     fetchGameInfo();
     fetchChatHistory();
@@ -112,6 +92,15 @@ const RPGGameUI: React.FC = () => {
     }
   };
 
+  const fetchConfig = async (): Promise<void> => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/get_config`);
+      const data = await response.json();
+      setConfig(data);
+    } catch (error) {
+      console.error('Failed to fetch config:', error);
+    }
+  };
   const handleSendMessage = () => {
     if (!userInput.trim() || isGenerating || !isConnected) return;
 
@@ -219,6 +208,44 @@ const RPGGameUI: React.FC = () => {
       console.error('Failed to save edited game info field:', error);
     }
   };
+  const handleUpdateGameConfig = async (newConfig: any) => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/update_config`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newConfig),
+      });
+      const data = await response.json();
+      if (data.status === 'success') {
+        setConfig(newConfig);
+        await fetchGameInfo();
+        await fetchChatHistory();
+        alert('Configuration saved successfully!');
+      }
+    } catch (error) {
+      console.error('Failed to save configuration:', error);
+      alert('Failed to save configuration. Please try again.');
+    }
+  };
+  const handleSaveConfig = async (newConfig: any) => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/save_config`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newConfig),
+      });
+      const data = await response.json();
+      if (data.status === 'success') {
+        setConfig(newConfig);
+        await fetchGameInfo();
+        await fetchChatHistory();
+        alert('Configuration saved successfully!');
+      }
+    } catch (error) {
+      console.error('Failed to save configuration:', error);
+      alert('Failed to save configuration. Please try again.');
+    }
+  };
 
   return (
       <div className="bg-[#0d1117] min-h-screen text-gray-300 flex flex-col">
@@ -283,7 +310,7 @@ const RPGGameUI: React.FC = () => {
               <ConfigTab
                   config={config}
                   onSaveConfig={handleSaveConfig}
-              />
+                  onUpdateGameConfig={handleUpdateGameConfig}/>
           )}
         </main>
       </div>
