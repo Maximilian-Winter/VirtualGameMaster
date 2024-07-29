@@ -23,6 +23,7 @@ class VirtualGameMasterConfig:
         self.MIN_P: float = 0.0
         self.TFS_Z: float = 1.0
         self.COMMAND_PREFIX: str = "@"
+        self.STOP_SEQUENCES: str = "[]"
 
     @classmethod
     def from_env(cls, env_file: str = ".env") -> "VirtualGameMasterConfig":
@@ -45,6 +46,7 @@ class VirtualGameMasterConfig:
         config.MIN_P = float(os.getenv("MIN_P", 0.0))
         config.TFS_Z = float(os.getenv("TFS_Z", 1.0))
         config.COMMAND_PREFIX = os.getenv("COMMAND_PREFIX", "@")
+        config.STOP_SEQUENCES = os.getenv("STOP_SEQUENCES", "[]")
         return config
 
     @classmethod

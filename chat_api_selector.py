@@ -1,3 +1,5 @@
+import json
+
 from chat_api import ChatAPI, OpenAIChatAPI, OpenRouterAPI, OpenRouterAPIPromptMode, LlamaAgentProvider, \
     LlamaAgentProviderCustom, AnthropicChatAPI, MistralChatAPI, GroqChatAPI
 from virtual_game_master import VirtualGameMasterConfig
@@ -37,7 +39,14 @@ class VirtualGameMasterChatAPISelector:
             api.settings.top_k = self.config.TOP_K
             api.settings.min_p = self.config.MIN_P
 
+        if self.config.API_TYPE in ["openrouter", "openrouter_custom"]:
+            api.settings.stop = json.loads(self.config.STOP_SEQUENCES)
+
         if self.config.API_TYPE in ["llamacpp", "llamacpp_custom"]:
             api.settings.tfs_z = self.config.TFS_Z
+            api.settings.additional_stop_sequences = json.loads(self.config.STOP_SEQUENCES)
+
+        if self.config.API_TYPE is "groq":
+            api.settings.stop = json.loads(self.config.STOP_SEQUENCES)
 
         return api

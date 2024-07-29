@@ -117,6 +117,7 @@ class OpenRouterSettings(ChatAPISettings):
         self.top_a = 0.0
         self.seed = None
         self.max_tokens = None
+        self.stop = []
 
     def to_dict(self):
         return {
@@ -129,7 +130,8 @@ class OpenRouterSettings(ChatAPISettings):
             'min_p': self.min_p,
             'top_a': self.top_a,
             'seed': self.seed,
-            'max_tokens': self.max_tokens
+            'max_tokens': self.max_tokens,
+            'stop': self.stop
         }
 
 
@@ -145,7 +147,7 @@ class OpenRouterAPI(ChatAPI):
             "model": self.model,
             "messages": clean_history_messages(messages),
             "stream": stream,
-            "stop": ["</s>", "[INST]", "[/INST]"],
+            "stop": self.settings.stop if settings is None else settings.stop,
             "temperature": self.settings.temperature if settings is None else settings.temperature,
             "top_p": self.settings.top_p if settings is None else settings.top_p,
             "top_k": self.settings.top_k if settings is None else settings.top_k,
