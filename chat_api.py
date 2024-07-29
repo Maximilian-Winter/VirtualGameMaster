@@ -535,8 +535,9 @@ class AnthropicChatAPI(ChatAPI):
             max_tokens=self.settings.max_tokens if settings is None else settings.max_tokens
         )
         for chunk in stream:
-            if chunk.content:
-                yield chunk.content[0].text
+            if chunk.type == "content_block_delta":
+                if chunk.delta.type == "text_delta":
+                    yield chunk.delta.text
 
     def get_default_settings(self):
         return AnthropicSettings()

@@ -91,3 +91,41 @@ character_details:
       - Expert in firearms and hand-to-hand combat
       - Tactical planning and threat assessment
       - Combat first-aid
+
+game_world_information:
+  Cyberpunk Red:
+    - Set in the year 2045, following the events of the Fourth Corporate War
+    - A world recovering from global catastrophe and economic collapse
+    - Technology has advanced but is less reliable due to network instability
+    - Society is rebuilding, with a mix of old and new technologies
+
+  Night City:
+    - Located on the coast of the Free State of Northern California
+    - Known as "The City of Dreams" and "The City on the Edge of Tomorrow"
+    - Population: Approximately 5 million in the greater metropolitan area
+    - Divided into distinct districts, each with its own character and dangers
+    - Home to people from diverse backgrounds and cultures
+
+  Technology:
+    - Cybernetic enhancements are commonplace, ranging from simple implants to full-body conversions
+    - The Net has been largely replaced by the more limited and secure Data Pool
+    - AI development is strictly regulated following the events of the Fourth Corporate War
+    - Flying cars (AVs) exist but are primarily used by the wealthy and powerful
+
+  Society:
+    - Extreme wealth disparity between corporate elites and the general population
+    - Strong influence of street culture, including fashion, music, and slang
+    - Constant tension between corporate interests, government entities, and various factions
+    - High crime rates, with many relying on personal weaponry and cybernetic defenses
+
+  Economy:
+    - Dominated by megacorporations that often have more power than governments
+    - Thriving black market for cybernetics, weapons, and restricted technology
+    - Many people work as freelancers or "edgerunners" to survive
+    - Cryptocurrency and corporate scrip often used alongside traditional currency
+
+  Major Issues:
+    - Environmental degradation and climate change effects
+    - Ongoing recovery from the Fourth Corporate War
+    - Cyber psychosis resulting from excessive cybernetic modification
+    - Constant power struggles between corporations, gangs, and government entities

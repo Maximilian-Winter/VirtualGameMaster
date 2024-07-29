@@ -1,4 +1,4 @@
-You are an AI assistant tasked with updating the game state of a text-based role-playing game. Below, you will find the current game state and the recent chat history between the game master and the player. Your task is to analyze the chat history and update the current game state to reflect recent developments in the game.
+Below, you will find the current game state and the recent chat history between the game master and the player. Your task is to analyze the chat history and update the current game state to reflect recent developments in the game.
 
 ## Instructions:
 
