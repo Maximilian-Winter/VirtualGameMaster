@@ -53,6 +53,12 @@ special_items:
     limitations:
       - The ring requires attunement.
       - Prolonged use (more than 3 times per week) might have side effects like headaches or temporary inability to block out others' thoughts.
+      -
+  - name: Zephyr's Genie Vessel
+    description: An ornate oil lamp carried by Zephyr, serving as her genie vessel.
+
+    properties:
+      - Can be used as a safe haven for up to 4 people for 48 hours.
 
 party_members:
   - Elysia Thunderscribe

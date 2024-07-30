@@ -58,7 +58,7 @@ async def lifespan(app: FastAPI):
     config = VirtualGameMasterConfig.from_env()
     api_selector = VirtualGameMasterChatAPISelector(config)
     api = api_selector.get_api()
-    app.state = State(rpg_app=VirtualGameMaster(config, api))
+    app.state = State(rpg_app=VirtualGameMaster(config, api, True))
     app.state.rpg_app.load()
     yield
     # Shutdown
@@ -109,7 +109,7 @@ async def update_template_fields(fields: TemplateFields):
 
 @app.post("/api/save_game")
 async def save_game():
-    app.state.rpg_app.manual_save()
+    app.state.rpg_app.save()
     return {"status": "success"}
 
 
@@ -176,15 +176,29 @@ async def save_config(config_update: ConfigUpdate):
 async def get_chat_history_folders():
     chat_history_path = os.path.join(os.path.dirname(__file__), "chat_history")
     folders = [os.path.join("chat_history", f) for f in os.listdir(chat_history_path) if os.path.isdir(os.path.join(chat_history_path, f))]
-    return {"folders": folders}
+    return {"folders": folders, "active": os.path.join("chat_history", os.path.basename(app.state.rpg_app.config.GAME_SAVE_FOLDER))}
 
 
 @app.get("/api/get_game_starters")
 async def get_game_starters():
     game_starters_path = os.path.join(os.path.dirname(__file__), "game_starters")
     starters = [os.path.join("game_starters", f) for f in os.listdir(game_starters_path) if f.endswith(".yaml")]
-    return {"game_starters": starters}
+    return {"game_starters": starters, "active": os.path.join("game_starters", os.path.basename(app.state.rpg_app.config.INITIAL_GAME_STATE))}
 
+
+@app.post("/api/create_game_save_folder/{folder_name}")
+async def create_game_save_folder(folder_name: str):
+    try:
+        chat_history_path = os.path.join(os.path.dirname(__file__), "chat_history")
+        new_folder_path = os.path.join(chat_history_path, folder_name)
+
+        if os.path.exists(new_folder_path):
+            raise HTTPException(status_code=400, detail="Folder already exists")
+
+        os.makedirs(new_folder_path)
+        return {"status": "success", "message": f"Folder '{folder_name}' created successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):

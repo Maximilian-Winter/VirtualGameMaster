@@ -94,7 +94,7 @@ class ChatHistory:
             print(f"Error loading chat history: {e}. Starting with an empty history.")
             self.messages = []
 
-history = ChatHistory("chat_history/new_game")
+history = ChatHistory("chat_history/new_gameClaude")
 history.load_history()
 messages = history.to_list()
 
@@ -105,4 +105,19 @@ role_names = {
 }
 formatter = ChatFormatter(template, role_names)
 formatted_chat = formatter.format_messages(messages)
-print(formatted_chat.strip())
+# print(formatted_chat.strip())
+
+import difflib
+
+def generate_diff_example(old_content, new_content):
+    """Generate a diff example to show the LLM."""
+    diff = difflib.unified_diff(
+        old_content.splitlines(keepends=True),
+        new_content.splitlines(keepends=True),
+        fromfile="old",
+        tofile="new",
+        lineterm="\n"
+    )
+    return ''.join(diff)
+
+print(generate_diff_example("Hello, World!\nHello, World!\nHello, World!\n", "Hello, World.\nHello, World.\nHello, World.\n"))

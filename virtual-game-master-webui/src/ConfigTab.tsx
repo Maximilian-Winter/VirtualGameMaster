@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Save } from 'lucide-react';
+import {FolderPlus, Save} from 'lucide-react';
 
 interface ConfigTabProps {
     config: {
@@ -19,7 +19,10 @@ const ConfigTab: React.FC<ConfigTabProps> = ({ config, onSaveConfig, onUpdateGam
     const [editedConfig, setEditedConfig] = useState(config);
     const [folders, setFolders] = useState<string[]>([]);
     const [gameStarters, setGameStarters] = useState<string[]>([]);
-
+    const [activeFolder, setActiveFolder] = useState<string>('');
+    const [activeGame, setActiveGame] = useState<string>('');
+    const [newFolderName, setNewFolderName] = useState<string>('');
+    const [showNewFolderInput, setShowNewFolderInput] = useState<boolean>(false);
     useEffect(() => {
         fetchFolders();
         fetchGameStarters();
@@ -29,6 +32,8 @@ const ConfigTab: React.FC<ConfigTabProps> = ({ config, onSaveConfig, onUpdateGam
         try {
             const response = await fetch('http://localhost:8000/api/get_chat_history_folders');
             const data = await response.json();
+            console.log(data.active)
+            setActiveFolder(data.active)
             setFolders(data.folders);
         } catch (error) {
             console.error('Failed to fetch folders:', error);
@@ -39,6 +44,8 @@ const ConfigTab: React.FC<ConfigTabProps> = ({ config, onSaveConfig, onUpdateGam
         try {
             const response = await fetch('http://localhost:8000/api/get_game_starters');
             const data = await response.json();
+            console.log(data.active)
+            setActiveGame(data.active)
             setGameStarters(data.game_starters);
         } catch (error) {
             console.error('Failed to fetch game starters:', error);
@@ -58,6 +65,30 @@ const ConfigTab: React.FC<ConfigTabProps> = ({ config, onSaveConfig, onUpdateGam
         onUpdateGameConfig(editedConfig)
     };
 
+    const handleCreateNewFolder = async () => {
+        if (newFolderName.trim() === '') {
+            alert('Please enter a valid folder name');
+            return;
+        }
+
+        try {
+            const response = await fetch('http://localhost:8000/api/create_game_save_folder/' + newFolderName, {
+                method: 'POST'
+            });
+
+            if (response.ok) {
+                alert('New game save folder created successfully');
+                setNewFolderName('');
+                setShowNewFolderInput(false);
+                await fetchFolders(); // Refresh the folder list
+            } else {
+                alert('Failed to create new game save folder');
+            }
+        } catch (error) {
+            console.error('Error creating new game save folder:', error);
+            alert('An error occurred while creating the new game save folder');
+        }
+    };
     return (
         <section className="flex-grow flex flex-col bg-[#0d1117] overflow-hidden relative w-full h-full p-4">
             <div className="max-w-3xl mx-auto w-full">
@@ -90,20 +121,46 @@ const ConfigTab: React.FC<ConfigTabProps> = ({ config, onSaveConfig, onUpdateGam
                                 <label htmlFor="GAME_SAVE_FOLDER" className="block text-sm font-medium text-gray-400">
                                     Game Save Folder
                                 </label>
-                                <select
-                                    id="GAME_SAVE_FOLDER"
-                                    name="GAME_SAVE_FOLDER"
-                                    value={editedConfig.GAME_SAVE_FOLDER}
-                                    onChange={handleInputChange}
-                                    className="mt-1 block w-full bg-[#0d1117] border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                >
-                                    {folders.map((folder) => (
-                                        <option key={folder} value={folder}>
-                                            {folder}
-                                        </option>
-                                    ))}
-                                </select>
+                                <div className="flex items-center space-x-2">
+                                    <select
+                                        id="GAME_SAVE_FOLDER"
+                                        name="GAME_SAVE_FOLDER"
+                                        value={activeFolder}
+                                        onChange={handleInputChange}
+                                        className="mt-1 block w-full bg-[#0d1117] border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                    >
+                                        {folders.map((folder) => (
+                                            <option key={folder} value={folder}>
+                                                {folder}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <button
+                                        onClick={() => setShowNewFolderInput(!showNewFolderInput)}
+                                        className="mt-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-3 rounded transition-colors flex items-center justify-center"
+                                    >
+                                        <FolderPlus size={18} />
+                                    </button>
+                                </div>
                             </div>
+                            {showNewFolderInput && (
+                                <div className="flex items-center space-x-2">
+                                    <input
+                                        type="text"
+                                        value={newFolderName}
+                                        onChange={(e) => setNewFolderName(e.target.value)}
+                                        placeholder="New folder name"
+                                        className="mt-1 block w-full bg-[#0d1117] border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                    />
+                                    <button
+                                        onClick={handleCreateNewFolder}
+                                        className="mt-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded transition-colors"
+                                    >
+                                        Create
+                                    </button>
+                                </div>
+                            )}
+
                             <div>
                                 <label htmlFor="INITIAL_GAME_STATE" className="block text-sm font-medium text-gray-400">
                                     Initial Game State File
@@ -111,7 +168,7 @@ const ConfigTab: React.FC<ConfigTabProps> = ({ config, onSaveConfig, onUpdateGam
                                 <select
                                     id="INITIAL_GAME_STATE"
                                     name="INITIAL_GAME_STATE"
-                                    value={editedConfig.INITIAL_GAME_STATE}
+                                    value={activeGame}
                                     onChange={handleInputChange}
                                     className="mt-1 block w-full bg-[#0d1117] border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                                 >

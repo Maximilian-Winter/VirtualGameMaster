@@ -42,9 +42,9 @@ def run_cli(app: VirtualGameMaster):
 
 # Usage
 if __name__ == "__main__":
-    config = VirtualGameMasterConfig.from_env()
-    # config.GAME_SAVE_FOLDER = "chat_history/new_gameNemo2"
+    config = VirtualGameMasterConfig.from_env(".env")
+    config.GAME_SAVE_FOLDER = "chat_history/new_gameNemo2"
     api_selector = VirtualGameMasterChatAPISelector(config)
     api = api_selector.get_api()
-    vgm_app = VirtualGameMaster(config, api, False)
+    vgm_app = VirtualGameMaster(config, api, True)
     run_cli(vgm_app)

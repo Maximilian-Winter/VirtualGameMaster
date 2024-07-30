@@ -288,10 +288,10 @@ class OpenRouterAPIPromptMode(ChatAPI):
 
 
 class LlamaCppSettings(ChatAPISettings):
-    temperature: float = 0.8
-    top_k: int = 40
-    top_p: float = 0.95
-    min_p: float = 0.05
+    temperature: float = 0.3
+    top_k: int = 0
+    top_p: float = 1.0
+    min_p: float = 0.0
     n_predict: int = -1
     n_keep: int = 0
     stream: bool = True
