@@ -131,3 +131,7 @@ class MessageTemplate:
         prompt = re.sub(r"\{(\w+)\}", replace_placeholder, self.template)
 
         return self._remove_empty_placeholders(prompt)
+
+
+
+

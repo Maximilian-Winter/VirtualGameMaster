@@ -1,4 +1,139 @@
-# Instructions
+from enum import Enum
+from typing import Optional, List
+from pydantic import BaseModel, Field
+import random
+
+from ToolAgents.agents import MistralAgent
+from ToolAgents.provider import LlamaCppSamplingSettings, LlamaCppServerProvider
+from ToolAgents.provider import VLLMServerSamplingSettings, \
+    VLLMServerProvider
+
+from ToolAgents import FunctionTool
+
+from enum import Enum
+from typing import Optional, List
+from pydantic import BaseModel, Field
+import random
+
+from ToolAgents.utilities import ChatHistory
+from VirtualGameMaster.retrieval_memory import RetrievalMemory
+from VirtualGameMaster.retrieval_memory_manager import RetrievalMemoryManager
+
+
+class DiceType(Enum):
+    D4 = "D4"
+    D6 = "D6"
+    D8 = "D8"
+    D10 = "D10"
+    D12 = "D12"
+    D20 = "D20"
+    D100 = "D100"
+
+
+class DiceRoll(BaseModel):
+    """
+    Roll one or more dice of a specified type.
+    """
+    dice_type: DiceType = Field(..., description="The type of dice to roll (e.g., D6, D20)")
+    number_of_dice: int = Field(1, ge=1, description="The number of dice to roll")
+    modifier: int = Field(0, description="Modifier to add to the total roll")
+
+    def run(self) -> dict:
+        dice_value = int(self.dice_type.value[1:])  # Extract the numeric value from the dice type
+        rolls = [random.randint(1, dice_value) for _ in range(self.number_of_dice)]
+        total = sum(rolls) + self.modifier
+        return {
+            "rolls": rolls,
+            "total_with_modifiers": total
+        }
+
+
+class archival_memory_search(BaseModel):
+    """
+    Search archival memory using semantic (embedding-based) search.
+    """
+
+    query: str = Field(
+        ...,
+        description="String to search for. The search will return the most semantically similar memories to this query.",
+    )
+    page: Optional[int] = Field(
+        ...,
+        description="Allows you to page through results. Only use on a follow-up query. Defaults to 0 (first page).",
+    )
+
+    def run(self, retrieval_memory_manager: RetrievalMemoryManager):
+        return retrieval_memory_manager.retrieve_memories(self.query)
+
+
+class archival_memory_insert(BaseModel):
+    """
+    Add to archival memory. Make sure to phrase the memory contents such that it can be easily queried later.
+    """
+
+    memory: str = Field(
+        ...,
+        description="Content to write to the memory. All unicode (including emojis) are supported.",
+    )
+    importance: float = Field(
+        ...,
+        description="A value from 1.0 to 10.0 indicating the importance of the memory.",
+    )
+
+    def run(self, retrieval_memory_manager: RetrievalMemoryManager):
+        return retrieval_memory_manager.add_memory_to_retrieval(
+            self.memory, self.importance
+        )
+
+
+class AgentRetrievalMemory:
+    def __init__(
+            self,
+            persistent_db_path="./retrieval_memory",
+            embedding_model_name="all-MiniLM-L6-v2",
+            collection_name="retrieval_memory_collection",
+    ):
+        self.retrieval_memory = RetrievalMemory(
+            persistent_db_path, embedding_model_name, collection_name
+        )
+        self.retrieval_memory_manager = RetrievalMemoryManager(self.retrieval_memory)
+        self.retrieve_memories_tool = FunctionTool(
+            archival_memory_search,
+            retrieval_memory_manager=self.retrieval_memory_manager,
+        )
+        self.add_retrieval_memory_tool = FunctionTool(
+            archival_memory_insert,
+            retrieval_memory_manager=self.retrieval_memory_manager,
+        )
+
+    def get_tool_list(self):
+        return [self.retrieve_memories_tool, self.add_retrieval_memory_tool]
+
+    def get_retrieve_memories_tool(self):
+        return self.retrieve_memories_tool
+
+    def get_add_retrieval_memory_tool(self):
+        return self.add_retrieval_memory_tool
+
+
+provider = LlamaCppServerProvider("http://127.0.0.1:8080/")
+
+agent = MistralAgent(provider=provider, debug_output=True)
+
+agent_retrieval_memory = AgentRetrievalMemory()
+settings = LlamaCppSamplingSettings()
+settings.neutralize_all_samplers()
+settings.temperature = 0.3
+settings.repeat_penalty = 1.0
+settings.min_p = 0.0
+settings.set_max_new_tokens(4096)
+
+chat_history = ChatHistory("chat_history/new_gameClaude")
+chat_history.load_history("chat_history_20240728_194107.json")
+messages = chat_history.to_list()
+
+messages.insert(0, {"role": "system",
+                    "content": """# Instructions
 
 Your task it to act as a Game Master (GM) for a text-based role-playing game. Your primary goal is to create an engaging, immersive, and dynamic role-playing experience for the player. You will narrate the story, describe the world, control non-player characters (NPCs), and adjudicate rules based on the provided game state.
 
@@ -129,4 +264,21 @@ When using the information from the game state sections:
 {special_items}
 
 ---
-Remember, your role is to create an immersive, reactive, and engaging game world. Use the provided game state as a foundation, but don't be afraid to expand upon it creatively while maintaining consistency. Your goal is to deliver a rich, personalised gaming experience that responds dynamically to the player's choices and actions.
+Use the following tools to 
+Remember, your role is to create an immersive, reactive, and engaging game world. Use the provided game state as a foundation, but don't be afraid to expand upon it creatively while maintaining consistency. Your goal is to deliver a rich, personalised gaming experience that responds dynamically to the player's choices and actions."""})
+
+tools = [agent_retrieval_memory.add_retrieval_memory_tool]
+
+
+def clean_history_messages(history_messages: List[dict]) -> List[dict]:
+    clean_messages = []
+    for msg in history_messages:
+        if "id" in msg:
+            msg.pop("id")
+        clean_messages.append(msg)
+
+    return clean_messages
+
+
+result = agent.get_response(messages=clean_history_messages(messages), tools=tools, sampling_settings=settings)
+print(result)

@@ -42,13 +42,13 @@ class RAGColbertReranker:
         """Add a memory with a given description and importance to the memory stream."""
         mem = [document]
         ids = [str(self.generate_unique_id())]
-        self.collection.add(documents=mem, metadatas=metadata, ids=ids)
+        self.collection.add(documents=mem, metadatas=[metadata], ids=ids)
 
-    def retrieve_documents(self, query: str, k, metadata_filter: dict = None):
+    def retrieve_documents(self, query: str, k):
         query_embedding = self.sentence_transformer_ef([query])
         query_result = self.collection.query(
             query_embedding,
-            n_results=k,
+            n_results=k * 2,
             include=["metadatas", "embeddings", "documents", "distances"],
         )
         documents = []
@@ -151,8 +151,7 @@ def init_test(database, chat, chat_api):
         game_information_list.append(GameInformation(packages[package], chat_api))
 
     for game_information in game_information_list:
-        game_information.generate_metadata()
-        database.add_document(game_information.get_formatted_chat(), game_information.get_metadata_as_dict())
+        database.add_document(game_information.get_formatted_chat())
 
 
 template = "{role}: {content}\n\n"
@@ -163,7 +162,7 @@ role_names = {
 formatter = ChatFormatter(template, role_names)
 
 vector_database = RAGColbertReranker()
-api = LlamaAgentProvider("http://127.0.0.1:8080", "")
+api = LlamaAgentProvider("http://127.0.0.1:8080", None)
 history = ChatHistory("chat_history/new_gameClaude")
 
 history.load_history()
@@ -173,7 +172,7 @@ init_test(vector_database, chat_list, api)
 
 last_3_messages = chat_list[-4:]
 
-results = vector_database.retrieve_documents("What information is most relevant to the following context?\n\nContext:\n" + formatter.format_messages(last_3_messages), k=10)
+results = vector_database.retrieve_documents("What information is most relevant to the following context?\n\nContext:\n" + formatter.format_messages(last_3_messages), k=5)
 
 for result in results:
     print(result["score"])
