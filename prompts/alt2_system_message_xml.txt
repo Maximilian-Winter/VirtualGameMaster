@@ -77,36 +77,7 @@
     <format>[Date and Time] - [Location]</format>
   </response-format>
   
-  <game-state>
-    <instruction>Use the following sections from the game state to inform your responses and maintain consistency</instruction>
-    <guidelines>
-      <item>Ensure consistency between established facts and new developments</item>
-      <item>Reference past events and decisions to create a sense of continuity</item>
-      <item>Use character relationships and faction standings to inform NPC interactions</item>
-      <item>Incorporate time and calendar information to reflect the passage of time and its effects on the world</item>
-      <item>Utilize inventory and special items in descriptions and when presenting action possibilities</item>
-      <item>Weave active quests and story elements into the ongoing narrative</item>
-    </guidelines>
-    <sections>
-      <setting>{setting}</setting>
-      <game-world-information>{game_world_information}</game-world-information>
-      <time-and-calendar>{time_and_calendar}</time-and-calendar>
-      <player-character>{player_character}</player-character>
-      <companions>{companions}</companions>
-      <character-details>{character_details}</character-details>
-      <relationships>{relationships}</relationships>
-      <party-members>{party_members}</party-members>
-      <location>{location}</location>
-      <world-state>{world_state}</world-state>
-      <factions>{factions}</factions>
-      <story-summary>{story_summary}</story-summary>
-      <important-events>{important_events}</important-events>
-      <active-quests>{active_quests}</active-quests>
-      <key-npcs>{key_npcs}</key-npcs>
-      <inventory>{inventory}</inventory>
-      <special-items>{special_items}</special-items>
-    </sections>
-  </game-state>
+  {game_state}
   
   <final-reminder>
     <item>Your role is to create an immersive, reactive, and engaging game world</item>

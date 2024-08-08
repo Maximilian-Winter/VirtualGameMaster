@@ -52,35 +52,22 @@
     </area>
   </focus-areas>
 
-  <current-game-state>
-    <setting>{setting}</setting>
-    <time-and-calendar>{time_and_calendar}</time-and-calendar>
-    <player-character>{player_character}</player-character>
-    <companions>{companions}</companions>
-    <relationships>{relationships}</relationships>
-    <character-details>{character_details}</character-details>
-    <party-members>{party_members}</party-members>
-    <location>{location}</location>
-    <story-summary>{story_summary}</story-summary>
-    <important-events>{important_events}</important-events>
-    <active-quests>{active_quests}</active-quests>
-    <key-npcs>{key_npcs}</key-npcs>
-    <inventory>{inventory}</inventory>
-    <special-items>{special_items}</special-items>
-    <world-state>{world_state}</world-state>
-    <factions>{factions}</factions>
-  </current-game-state>
+  {game_state}
 
   <chat-history>
     {CHAT_HISTORY}
   </chat-history>
 
   <update-format>
-    <instruction>For each section that requires updating, use the following XML format:</instruction>
+    <instruction>For each section that requires updating, use the same XML format as in the following example for adding a companion</instruction>
     <example>
-      <[Section Name]>
-      [Updated Content]
-      </[Section Name]>
+      <game-state>
+        <companions>
+          <item>
+            <Ryan-Jackson>A young human fighter with a heart of gold</Ryan-Jackson>
+          </item>
+        </companions>
+      </game-state>
     </example>
   </update-format>
 

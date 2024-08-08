@@ -68,22 +68,23 @@ def xml_to_string(root):
     return reparsed.toprettyxml(indent="  ")
 
 
-# Example usage
-xml_output = yaml_to_xml('game_starters/rpg_candlekeep.yaml')
-print(xml_to_string(xml_output))
+class XMLGameState:
+    def __init__(self, initial_state_file: str):
+        self.xml_root_node = self.load_yaml_initial_game_state(initial_state_file)
 
-# Optionally, save to file
-with open('output.xml', 'w', encoding="utf-8") as file:
-    file.write(xml_to_string(xml_output))
+    def load_yaml_initial_game_state(self, file_path: str):
+        return yaml_to_xml(file_path)
 
-print("--------------------------")
+    def get_xml_string(self):
+        return xml_to_string(self.xml_root_node)
 
-update_xml_string = """<game-state><companions><item><Elsa-Flameheart>An Eladrin female Rogue and sister of Lyra</Elsa-Flameheart></item></companions></game-state>"""
+    def update_xml_from_string(self, xml_string: str):
+        merge_xml_update(self.xml_root_node, xml_string.replace("\n", ""))
 
-merge_xml_update(xml_output, update_xml_string)
+    def save_to_xml_file(self, file_path: str):
+        with open(file_path, 'w', encoding='utf-8') as file:
+            file.write(xml_to_string(self.xml_root_node))
 
-print(xml_to_string(xml_output))
-
-# Optionally, save to file
-with open('output_updated.xml', 'w', encoding="utf-8") as file:
-    file.write(xml_to_string(xml_output))
+    def load_from_xml_file(self, file_path: str):
+        with open(file_path, 'r', encoding='utf-8') as file:
+            self.xml_root_node = ET.fromstring(file.read())
