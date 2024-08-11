@@ -100,7 +100,7 @@ for char_id in characters_in_city:
 print("\nItems possessed by Aria Starlight:")
 hero_relationships = game_world.knowledge_graph.get_relationships(hero_id)
 for rel in hero_relationships:
-    if rel['type'] == RelationshipType.POSSESSES.name:
+    if rel['type'] == RelationshipType.POSSESSES.value:
         item_data = game_world.knowledge_graph.get_entity_attributes(rel['target'])
         print(f"- {item_data['item_name']} ({item_data['item_type']})")
 
@@ -110,9 +110,9 @@ for quest_id in dragon_quests:
     quest_data = game_world.knowledge_graph.get_entity_attributes(quest_id)
     quest_relationships = game_world.knowledge_graph.get_relationships(quest_id)
     for rel in quest_relationships:
-        if rel['type'] == RelationshipType.INVOLVES.name:
+        if rel['type'] == RelationshipType.INVOLVES.value:
             target_data = game_world.knowledge_graph.get_entity_attributes(rel['target'])
-            if target_data['entity_type'] == EntityType.BEAST.name and target_data['beast_type'] == BeastType.MYTHICAL.name:
+            if target_data['entity_type'] == EntityType.BEAST.value and target_data['beast_type'] == BeastType.MYTHICAL.value:
                 print(f"- {quest_data['quest_name']}: {quest_data['description']}")
 
 # Save the game world to a file

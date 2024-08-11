@@ -358,7 +358,7 @@ class GameWorldKnowledgeGraph:
 
     def generate_entity_id(self, entity_type: EntityType) -> str:
         self.entity_counters[entity_type] += 1
-        return f"{entity_type.name}-{self.entity_counters[entity_type]}"
+        return f"{entity_type.value}-{self.entity_counters[entity_type]}"
 
     def add_character(self, character: Character):
         """
@@ -368,7 +368,7 @@ class GameWorldKnowledgeGraph:
         """
         entity_id = self.generate_entity_id(EntityType.CHARACTER)
         self.knowledge_graph.add_entity(entity_id, character.model_dump(mode="json"))
-        return "Character entity added to game world knowledge graph with entity id: " + entity_id
+        return entity_id
 
     def add_beast(self, beast: Beast):
         """
@@ -378,7 +378,7 @@ class GameWorldKnowledgeGraph:
         """
         entity_id = self.generate_entity_id(EntityType.BEAST)
         self.knowledge_graph.add_entity(entity_id, beast.model_dump(mode="json"))
-        return "Beast entity added to game world knowledge graph with entity id: " + entity_id
+        return entity_id
 
     def add_location(self, location: Location):
         """
@@ -388,7 +388,7 @@ class GameWorldKnowledgeGraph:
         """
         entity_id = self.generate_entity_id(EntityType.LOCATION)
         self.knowledge_graph.add_entity(entity_id, location.model_dump(mode="json"))
-        return "Location entity added to game world knowledge graph with entity id: " + entity_id
+        return entity_id
 
     def add_item(self, item: Item):
         """
@@ -398,7 +398,7 @@ class GameWorldKnowledgeGraph:
         """
         entity_id = self.generate_entity_id(EntityType.ITEM)
         self.knowledge_graph.add_entity(entity_id, item.model_dump(mode="json"))
-        return "Item entity added to game world knowledge graph with entity id: " + entity_id
+        return entity_id
 
     def add_quest(self, quest: Quest):
         """
@@ -408,7 +408,7 @@ class GameWorldKnowledgeGraph:
         """
         entity_id = self.generate_entity_id(EntityType.QUEST)
         self.knowledge_graph.add_entity(entity_id, quest.model_dump(mode="json"))
-        return "Quest entity added to game world knowledge graph with entity id: " + entity_id
+        return entity_id
 
     def add_event(self, event: Event):
         """
@@ -418,7 +418,7 @@ class GameWorldKnowledgeGraph:
         """
         entity_id = self.generate_entity_id(EntityType.EVENT)
         self.knowledge_graph.add_entity(entity_id, event.model_dump(mode="json"))
-        return "Event entity added to game world knowledge graph with entity id: " + entity_id
+        return entity_id
 
     def add_faction(self, faction: Faction):
         """
@@ -428,7 +428,7 @@ class GameWorldKnowledgeGraph:
         """
         entity_id = self.generate_entity_id(EntityType.FACTION)
         self.knowledge_graph.add_entity(entity_id, faction.model_dump(mode="json"))
-        return "Faction entity added to game world knowledge graph with entity id: " + entity_id
+        return entity_id
 
     def add_relationship(self, relationship: Relationship):
         """
@@ -437,7 +437,7 @@ class GameWorldKnowledgeGraph:
             relationship(Relationship): The relationship to add.
         """
         self.knowledge_graph.add_relationship(relationship.first_entity_id, relationship.second_entity_id,
-                                              relationship.relationship_type.name,
+                                              relationship.relationship_type.value,
                                               {"description": relationship.description})
         return "Relationship successful added to game world knowledge graph."
 
@@ -456,9 +456,9 @@ class GameWorldKnowledgeGraph:
         """
 
         def filter_func(node, data):
-            if data['entity_type'] != EntityType.CHARACTER:
+            if data['entity_type'] != EntityType.CHARACTER.value:
                 return False
-            if character_type and data['character_type'] != character_type:
+            if character_type and data['character_type'] != character_type.value:
                 return False
             if name and name.lower() not in data['character_name'].lower():
                 return False
@@ -471,7 +471,7 @@ class GameWorldKnowledgeGraph:
             if location:
                 # Check if character is related to the given location
                 for _, target, edge_data in self.knowledge_graph.graph.edges(node, data=True):
-                    if (edge_data['relationship'] == RelationshipType.RESIDES_IN.name and
+                    if ((edge_data['relationship'] == RelationshipType.INHABITS.value or edge_data['relationship'] == RelationshipType.LOCATED_IN.value or edge_data['relationship'] == RelationshipType.RESIDES_IN.value) and
                             location.lower() in self.knowledge_graph.graph.nodes[target]['location_name'].lower()):
                         return True
                 return False
@@ -494,9 +494,9 @@ class GameWorldKnowledgeGraph:
         """
 
         def filter_func(node, data):
-            if data['entity_type'] != EntityType.BEAST:
+            if data['entity_type'] != EntityType.BEAST.value:
                 return False
-            if beast_type and data['beast_type'] != beast_type:
+            if beast_type and data['beast_type'] != beast_type.value:
                 return False
             if name and name.lower() not in data['beast_name'].lower():
                 return False
@@ -509,7 +509,7 @@ class GameWorldKnowledgeGraph:
             if location:
                 # Check if beast is related to the given location
                 for _, target, edge_data in self.knowledge_graph.graph.edges(node, data=True):
-                    if (edge_data['relationship'] == RelationshipType.INHABITS.name and
+                    if ((edge_data['relationship'] == RelationshipType.INHABITS.value or edge_data['relationship'] == RelationshipType.LOCATED_IN.value or edge_data['relationship'] == RelationshipType.RESIDES_IN.value) and
                             location.lower() in self.knowledge_graph.graph.nodes[target]['location_name'].lower()):
                         return True
                 return False
@@ -526,9 +526,9 @@ class GameWorldKnowledgeGraph:
         """
 
         def filter_func(node, data):
-            if data['entity_type'] != EntityType.LOCATION:
+            if data['entity_type'] != EntityType.LOCATION.value:
                 return False
-            if location_type and data['location_type'] != location_type:
+            if location_type and data['location_type'] != location_type.value:
                 return False
             if name and name.lower() not in data['location_name'].lower():
                 return False
@@ -536,77 +536,105 @@ class GameWorldKnowledgeGraph:
 
         return [node for node, data in self.knowledge_graph.graph.nodes(data=True) if filter_func(node, data)]
 
-    def query_items(self, item_type: Optional[ItemType] = None, name: Optional[str] = None):
+    def query_items(self, item_type: Optional[ItemType] = None, name: Optional[str] = None, location: Optional[str] = None):
         """
         Queries the items stored in the game world knowledge graph.
         Args:
             item_type(Optional[ItemType]): The type of item to query.
             name(Optional[str]): The name of the item to query. Allows partial matches.
+            location(Optional[str]): The location of the item to query. Allows partial matches.
         """
 
         def filter_func(node, data):
-            if data['entity_type'] != EntityType.ITEM:
+            if data['entity_type'] != EntityType.ITEM.value:
                 return False
-            if item_type and data['item_type'] != item_type:
+            if item_type and data['item_type'] != item_type.value:
                 return False
             if name and name.lower() not in data['item_name'].lower():
+                return False
+            if location:
+                for _, target, edge_data in self.knowledge_graph.graph.edges(node, data=True):
+                    if (edge_data['relationship'] == RelationshipType.LOCATED_IN.value and
+                            location.lower() in self.knowledge_graph.graph.nodes[target]['location_name'].lower()):
+                        return True
                 return False
             return True
 
         return [node for node, data in self.knowledge_graph.graph.nodes(data=True) if filter_func(node, data)]
 
-    def query_quests(self, quest_type: Optional[QuestType] = None, name: Optional[str] = None):
+    def query_quests(self, quest_type: Optional[QuestType] = None, name: Optional[str] = None, location: Optional[str] = None):
         """
         Queries the quests stored in the game world knowledge graph.
         Args:
             quest_type(Optional[QuestType]): The type of quest to query.
             name(Optional[str]): The name of the quest to query. Allows partial matches.
+            location(Optional[str]): The location of the quest to query. Allows partial matches.
         """
 
         def filter_func(node, data):
-            if data['entity_type'] != EntityType.QUEST:
+            if data['entity_type'] != EntityType.QUEST.value:
                 return False
-            if quest_type and data['quest_type'] != quest_type:
+            if quest_type and data['quest_type'] != quest_type.value:
                 return False
             if name and name.lower() not in data['quest_name'].lower():
+                return False
+            if location:
+                for _, target, edge_data in self.knowledge_graph.graph.edges(node, data=True):
+                    if (edge_data['relationship'] == RelationshipType.LOCATED_IN.value and
+                            location.lower() in self.knowledge_graph.graph.nodes[target]['location_name'].lower()):
+                        return True
                 return False
             return True
 
         return [node for node, data in self.knowledge_graph.graph.nodes(data=True) if filter_func(node, data)]
 
-    def query_events(self, event_type: Optional[EventType] = None, name: Optional[str] = None):
+    def query_events(self, event_type: Optional[EventType] = None, name: Optional[str] = None, location: Optional[str] = None):
         """
         Queries the events stored in the game world knowledge graph.
         Args:
             event_type(Optional[EventType]): The type of event to query.
             name(Optional[str]): The name of the event to query. Allows partial matches.
+            location(Optional[str]): The location of the event to query. Allows partial matches.
         """
 
         def filter_func(node, data):
-            if data['entity_type'] != EntityType.EVENT:
+            if data['entity_type'] != EntityType.EVENT.value:
                 return False
-            if event_type and data['event_type'] != event_type:
+            if event_type and data['event_type'] != event_type.value:
                 return False
             if name and name.lower() not in data['event_name'].lower():
+                return False
+            if location:
+                for _, target, edge_data in self.knowledge_graph.graph.edges(node, data=True):
+                    if (edge_data['relationship'] == RelationshipType.LOCATED_IN.value and
+                            location.lower() in self.knowledge_graph.graph.nodes[target]['location_name'].lower()):
+                        return True
                 return False
             return True
 
         return [node for node, data in self.knowledge_graph.graph.nodes(data=True) if filter_func(node, data)]
 
-    def query_factions(self, faction_type: Optional[FactionType] = None, name: Optional[str] = None):
+    def query_factions(self, faction_type: Optional[FactionType] = None, name: Optional[str] = None, location: Optional[str] = None):
         """
         Queries the factions stored in the game world knowledge graph.
         Args:
             faction_type(Optional[FactionType]): The type of faction to query.
             name(Optional[str]): The name of the faction to query. Allows partial matches.
+            location(Optional[str]): The location of the faction to query. Allows partial matches.
         """
 
         def filter_func(node, data):
-            if data['entity_type'] != EntityType.FACTION:
+            if data['entity_type'] != EntityType.FACTION.value:
                 return False
-            if faction_type and data['faction_type'] != faction_type:
+            if faction_type and data['faction_type'] != faction_type.value:
                 return False
             if name and name.lower() not in data['faction_name'].lower():
+                return False
+            if location:
+                for _, target, edge_data in self.knowledge_graph.graph.edges(node, data=True):
+                    if (edge_data['relationship'] == RelationshipType.LOCATED_IN.value and
+                            location.lower() in self.knowledge_graph.graph.nodes[target]['location_name'].lower()):
+                        return True
                 return False
             return True
 
