@@ -1,4 +1,5 @@
 import json
+import os.path
 from typing import List, Dict, Any, Optional
 from enum import Enum, auto
 
@@ -260,7 +261,7 @@ class Character(GameEntity):
     """
     Represents a Character.
     """
-    entity_type = EntityType.CHARACTER
+    entity_type: EntityType = EntityType.CHARACTER
     character_name: str = Field(..., description="The name of the character.")
     character_type: CharacterType = Field(..., description="The type of character.")
     age: int = Field(..., description="The age of the character.")
@@ -273,9 +274,9 @@ class Beast(GameEntity):
     """
     Represents a Beast.
     """
-    entity_type = EntityType.BEAST
-    beast_name = str = Field(..., description="The name of the beast.")
-    beast_type = BeastType = Field(..., description="The type of the beast.")
+    entity_type: EntityType = EntityType.BEAST
+    beast_name: str = Field(..., description="The name of the beast.")
+    beast_type: BeastType = Field(..., description="The type of the beast.")
     age: int = Field(..., description="The age of the beast.")
     race: str = Field(..., description="The race of the beast.")
     gender: str = Field(..., description="The gender of the beast.")
@@ -286,9 +287,9 @@ class Location(GameEntity):
     """
     Represents a Location.
     """
-    entity_type = EntityType.LOCATION
+    entity_type: EntityType = EntityType.LOCATION
     location_name: str = Field(..., description="The name of the location.")
-    location_type = LocationType = Field(..., description="The type of the location.")
+    location_type: LocationType = Field(..., description="The type of the location.")
     description: str = Field(..., description="The description of the location.")
 
 
@@ -296,7 +297,7 @@ class Item(GameEntity):
     """
     Represents an Item.
     """
-    entity_type = EntityType.ITEM
+    entity_type: EntityType = EntityType.ITEM
     item_name: str = Field(..., description="The name of the item.")
     item_type: ItemType = Field(..., description="The type of item.")
     description: str = Field(..., description="The description of the item.")
@@ -306,7 +307,7 @@ class Quest(GameEntity):
     """
     Represents a Quest.
     """
-    entity_type = EntityType.QUEST
+    entity_type: EntityType = EntityType.QUEST
     quest_name: str = Field(..., description="The name of the quest.")
     quest_type: QuestType = Field(..., description="The type of quest.")
     description: str = Field(..., description="The description of the quest.")
@@ -316,7 +317,7 @@ class Event(GameEntity):
     """
     Represents an Event.
     """
-    entity_type = EntityType.EVENT
+    entity_type: EntityType = EntityType.EVENT
     event_name: str = Field(..., description="The name of the event.")
     event_type: EventType = Field(..., description="The type of event.")
     description: str = Field(..., description="The description of the event.")
@@ -326,7 +327,7 @@ class Faction(GameEntity):
     """
     Represents a Faction.
     """
-    entity_type = EntityType.FACTION
+    entity_type: EntityType = EntityType.FACTION
     faction_name: str = Field(..., description="The name of the faction.")
     faction_type: FactionType = Field(..., description="The type of faction.")
     description: str = Field(..., description="The description of the faction.")
@@ -453,6 +454,7 @@ class GameWorldKnowledgeGraph:
             gender(Optional[str]): The gender of the character to query. Allows partial matches.
             location(Optional[str]): The location of the character to query. Allows partial matches.
         """
+
         def filter_func(node, data):
             if data['entity_type'] != EntityType.CHARACTER:
                 return False
@@ -490,6 +492,7 @@ class GameWorldKnowledgeGraph:
             gender(Optional[str]): The gender of the beast to query. Allows partial matches.
             location(Optional[str]): The location of the beast to query. Allows partial matches.
         """
+
         def filter_func(node, data):
             if data['entity_type'] != EntityType.BEAST:
                 return False
@@ -514,7 +517,6 @@ class GameWorldKnowledgeGraph:
 
         return [node for node, data in self.knowledge_graph.graph.nodes(data=True) if filter_func(node, data)]
 
-
     def query_location(self, location_type: Optional[LocationType] = None, name: Optional[str] = None):
         """
         Queries the locations stored in the game world knowledge graph.
@@ -522,6 +524,7 @@ class GameWorldKnowledgeGraph:
             location_type(Optional[LocationType]): The type of location to query.
             name(Optional[str]): The name of the location to query. Allows partial matches.
         """
+
         def filter_func(node, data):
             if data['entity_type'] != EntityType.LOCATION:
                 return False
@@ -616,17 +619,17 @@ class GameWorldKnowledgeGraph:
         Args:
             filename (str): The name of the file to save to.
         """
-
+        filename_without_extension = os.path.splitext(filename)[0]
+        filename_knowledge_graph = filename_without_extension + "_knowledge_graph.json"
         data = {
-            "knowledge_graph": self.knowledge_graph.graph,
-            "entity_counters": {k.name: v for k, v in self.entity_counters.items()}
+            "knowledge_graph_filename": filename_knowledge_graph,
+            "entity_counters": self.entity_counters
         }
 
-        with open(filename, 'w') as f:
-            json.dump(nx.node_link_data(data["knowledge_graph"]), f)
-            json.dump(data["entity_counters"], f)
+        self.knowledge_graph.save_to_json(filename_knowledge_graph)
 
-        print(f"GameWorldKnowledgeGraph saved to {filename}")
+        with open(filename, 'w') as f:
+            json.dump(data, f)
 
     @classmethod
     def load(cls, filename: str) -> 'GameWorldKnowledgeGraph':
@@ -639,13 +642,10 @@ class GameWorldKnowledgeGraph:
         Returns:
             GameWorldKnowledgeGraph: The loaded GameWorldKnowledgeGraph instance.
         """
-        with open(filename, 'r') as f:
-            graph_data = json.load(f)
-            counter_data = json.load(f)
+        with open(filename, 'r', encoding="utf-8") as f:
+            data = json.load(f)
 
         game_world = cls()
-        game_world.knowledge_graph.graph = nx.node_link_graph(graph_data, multigraph=True, directed=True)
-        game_world.entity_counters = {EntityType[k]: v for k, v in counter_data.items()}
-
-        print(f"GameWorldKnowledgeGraph loaded from {filename}")
+        game_world.knowledge_graph = KnowledgeGraph.load_from_json(data['knowledge_graph_filename'])
+        game_world.entity_counters = data['entity_counters']
         return game_world
