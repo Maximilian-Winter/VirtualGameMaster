@@ -140,18 +140,18 @@ print(game_world.query_characters(age=1000))  # Note: This won't work as intende
 print_separator("Querying Beasts")
 
 print("All Mythical beasts:")
-print(game_world.query_beast(beast_type=BeastType.MYTHICAL))
+print(game_world.query_beasts(beast_type=BeastType.MYTHICAL))
 
 print("\nAll beasts in Mordor:")
-print(game_world.query_beast(location="Mordor"))
+print(game_world.query_beasts(location="Mordor"))
 
 print_separator("Querying Locations")
 
 print("All Cities:")
-print(game_world.query_location(location_type=LocationType.CITY))
+print(game_world.query_locations(location_type=LocationType.CITY))
 
 print("\nAll locations with 'Mordor' in the name:")
-print(game_world.query_location(name="Mordor"))
+print(game_world.query_locations(name="Mordor"))
 
 print_separator("Querying Items")
 

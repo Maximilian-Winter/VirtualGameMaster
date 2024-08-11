@@ -10,7 +10,7 @@ def main():
 
     # Add entities
     print(game_world.add_character(Character(
-        character_name="Elara Moonwhisper",
+        name="Elara Moonwhisper",
         character_type=CharacterType.NPC,
         age=150,
         race="Elf",
@@ -19,7 +19,7 @@ def main():
     )))
 
     print(game_world.add_character(Character(
-        character_name="Grommash Ironheart",
+        name="Grommash Ironheart",
         character_type=CharacterType.NPC,
         age=45,
         race="Dwarf",
@@ -28,7 +28,7 @@ def main():
     )))
 
     print(game_world.add_beast(Beast(
-        beast_name="Shadowfang",
+        name="Shadowfang",
         beast_type=BeastType.MONSTER,
         age=100,
         race="Dire Wolf",
@@ -37,31 +37,31 @@ def main():
     )))
 
     print(game_world.add_location(Location(
-        location_name="Mistwood Forest",
+        name="Mistwood Forest",
         location_type=LocationType.WILDERNESS,
         description="A dense, misty forest with ancient trees and hidden mysteries."
     )))
 
     print(game_world.add_item(Item(
-        item_name="Moonstone Amulet",
+        name="Moonstone Amulet",
         item_type=ItemType.ARTIFACT,
         description="A silver amulet with a glowing moonstone that enhances magical abilities."
     )))
 
     print(game_world.add_quest(Quest(
-        quest_name="The Curse of Shadowfang",
+        name="The Curse of Shadowfang",
         quest_type=QuestType.KILL_MONSTER,
         description="Defeat the monstrous dire wolf Shadowfang to lift the curse on Mistwood Forest."
     )))
 
     print(game_world.add_event(Event(
-        event_name="The Great Mist",
+        name="The Great Mist",
         event_type=EventType.NATURAL_DISASTER,
         description="A supernatural mist that engulfed Mistwood Forest, bringing dark creatures with it."
     )))
 
     print(game_world.add_faction(Faction(
-        faction_name="Order of the Silver Moon",
+        name="Order of the Silver Moon",
         faction_type=FactionType.GUILD,
         description="A secretive guild of mages dedicated to protecting the realm from supernatural threats."
     )))
@@ -89,9 +89,9 @@ def main():
     )))
 
     print(game_world.add_relationship(Relationship(
-        first_entity_id="Item-1",  # Moonstone Amulet
+        first_entity_id="Character-1", # Elara Moonwhisper
         relationship_type=RelationshipType.POSSESSES,
-        second_entity_id="Character-1",  # Elara Moonwhisper
+        second_entity_id="Item-1",  # Moonstone Amulet
         description="Elara wears the Moonstone Amulet, enhancing her magical powers."
     )))
 
@@ -100,10 +100,10 @@ def main():
     print(game_world.query_characters(race="Elf"))
 
     print("\nQuerying beasts:")
-    print(game_world.query_beast(beast_type=BeastType.MONSTER))
+    print(game_world.query_beasts(beast_type=BeastType.MONSTER))
 
     print("\nQuerying locations:")
-    print(game_world.query_location(location_type=LocationType.WILDERNESS))
+    print(game_world.query_locations(location_type=LocationType.WILDERNESS))
 
     print("\nQuerying items:")
     print(game_world.query_items(item_type=ItemType.ARTIFACT))
@@ -131,6 +131,9 @@ def main():
 
     print("\nGetting nearby entities:")
     print(game_world.get_nearby_entities("Location-1"))
+
+    print(game_world.query_relationships("Location-1"))
+    print(game_world.query_relationships("Beast-1"))
 
     # Save the game world
     game_world.save("my_game_world.json")
