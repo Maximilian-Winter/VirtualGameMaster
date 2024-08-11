@@ -2,6 +2,7 @@ import json
 from typing import List, Dict, Any, Optional
 from enum import Enum, auto
 
+import graphviz
 import networkx as nx
 
 
@@ -59,7 +60,7 @@ class KnowledgeGraph:
         """Find a path between two entities, optionally constrained by relationship types."""
         if relationship_types:
             def edge_filter(u, v, d):
-                return d["key"] in relationship_types
+                return d["relationship"] in relationship_types
 
             path = nx.shortest_path(self.graph, start_entity, end_entity, weight=None, method="dijkstra",
                                     edge_filter=edge_filter)
@@ -71,6 +72,30 @@ class KnowledgeGraph:
         """Get a subgraph centered on an entity up to a certain depth."""
         subgraph = nx.ego_graph(self.graph, center_entity, radius=max_depth)
         return nx.node_link_data(subgraph)
+
+    def visualize(self, output_file: str = "knowledge_graph", format: str = "png") -> None:
+        """
+        Visualize the knowledge graph using Graphviz.
+        Args:
+            output_file: Name of the output file (without extension)
+            format: Output format (e.g., "png", "pdf", "svg")
+        """
+        dot = graphviz.Digraph(comment="Knowledge Graph")
+        dot.attr(rankdir="LR", size="8,5")
+
+        # Add nodes
+        for node, data in self.graph.nodes(data=True):
+            label = f"{node}\n{json.dumps(data, indent=2)}"
+            dot.node(node, label)
+
+        # Add edges
+        for u, v, data in self.graph.edges(data=True):
+            label = data.get("relationship", "")
+            dot.edge(u, v, label=label)
+
+        # Render the graph
+        dot.render(output_file, format=format, cleanup=True)
+        print(f"Graph visualization saved as {output_file}.{format}")
 
     def save_to_json(self, filename: str) -> None:
         """Save the graph to a JSON file."""
@@ -227,7 +252,7 @@ def get_local_game_state(entity: str, depth: int = 2) -> Dict[str, Any]:
 
 
 # Example usage
-kg = GameKnowledgeGraph()
+kg = KnowledgeGraph()
 
 # Using the wrapper functions
 print(add_game_entity("Player1", {"name": "Alice", "class": "Warrior", "level": 5, "hp": 100}))
@@ -240,3 +265,5 @@ print("Player1 info:", get_entity_info("Player1"))
 print(update_game_entity("Player1", {"hp": 90, "status": "wounded"}))
 print(get_local_game_state("Player1"))
 print("Updated Player1 info:", get_entity_info("Player1"))
+
+kg.visualize("output.png", "png")
