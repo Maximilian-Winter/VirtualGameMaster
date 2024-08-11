@@ -1,6 +1,6 @@
 import json
 import os.path
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Union
 from enum import Enum, auto
 
 import graphviz
@@ -47,7 +47,8 @@ class KnowledgeGraph:
         return [node for node, data in self.graph.nodes(data=True)
                 if all(data.get(k) == v for k, v in attribute_filter.items())]
 
-    def query_relationships(self, entity: str, relationship_type: Optional[str] = None, direction: str = 'both') -> List[Dict[str, Any]]:
+    def query_relationships(self, entity: str, relationship_type: Optional[str] = None, direction: str = 'both') -> \
+            List[Dict[str, Any]]:
         relationships = []
 
         if direction in ['outgoing', 'both']:
@@ -360,6 +361,53 @@ class Relationship(BaseModel):
     description: str = Field(..., description="The description of the relationship.")
 
 
+class CharacterQuery(BaseModel):
+    character_type: Optional[CharacterType] = Field(None, description="The type of character to query.")
+    name: Optional[str] = Field(None, description="The name of the character to query. Allows partial matches.")
+    age: Optional[int] = Field(None, description="The age of the character to query.")
+    race: Optional[str] = Field(None, description="The race of the character to query. Allows partial matches.")
+    gender: Optional[str] = Field(None, description="The gender of the character to query. Allows partial matches.")
+    location: Optional[str] = Field(None, description="The location of the character to query. Allows partial matches.")
+
+
+class BeastQuery(BaseModel):
+    beast_type: Optional[BeastType] = Field(None, description="The type of beast to query.")
+    name: Optional[str] = Field(None, description="The name of the beast to query. Allows partial matches.")
+    age: Optional[int] = Field(None, description="The age of the beast to query.")
+    race: Optional[str] = Field(None, description="The race of the beast to query. Allows partial matches.")
+    gender: Optional[str] = Field(None, description="The gender of the beast to query. Allows partial matches.")
+    location: Optional[str] = Field(None, description="The location of the beast to query. Allows partial matches.")
+
+
+class LocationQuery(BaseModel):
+    location_type: Optional[LocationType] = Field(None, description="The type of location to query.")
+    name: Optional[str] = Field(None, description="The name of the location to query. Allows partial matches.")
+
+
+class ItemQuery(BaseModel):
+    item_type: Optional[ItemType] = Field(None, description="The type of item to query.")
+    name: Optional[str] = Field(None, description="The name of the item to query. Allows partial matches.")
+    location: Optional[str] = Field(None, description="The location of the item to query. Allows partial matches.")
+
+
+class QuestQuery(BaseModel):
+    quest_type: Optional[QuestType] = Field(None, description="The type of quest to query.")
+    name: Optional[str] = Field(None, description="The name of the quest to query. Allows partial matches.")
+    location: Optional[str] = Field(None, description="The location of the quest to query. Allows partial matches.")
+
+
+class EventQuery(BaseModel):
+    event_type: Optional[EventType] = Field(None, description="The type of event to query.")
+    name: Optional[str] = Field(None, description="The name of the event to query. Allows partial matches.")
+    location: Optional[str] = Field(None, description="The location of the event to query. Allows partial matches.")
+
+
+class FactionQuery(BaseModel):
+    faction_type: Optional[FactionType] = Field(None, description="The type of faction to query.")
+    name: Optional[str] = Field(None, description="The name of the faction to query. Allows partial matches.")
+    location: Optional[str] = Field(None, description="The location of the faction to query. Allows partial matches.")
+
+
 class GameWorldKnowledgeGraph:
     def __init__(self):
         self.knowledge_graph = KnowledgeGraph()
@@ -376,6 +424,72 @@ class GameWorldKnowledgeGraph:
     def generate_entity_id(self, entity_type: EntityType) -> str:
         self.entity_counters[entity_type] += 1
         return f"{entity_type.value}-{self.entity_counters[entity_type]}"
+
+    def add_entity(self, game_entity: Union[Character, Beast, Location, Item, Quest, Event, Faction]):
+        """
+        Adds a game entity to the game world knowledge graph. Returns the entity id of the entity added.
+        Args:
+            game_entity(Union[Character, Beast, Location, Item, Quest, Event, Faction]): The entity to add.
+        """
+        entity_id = self.generate_entity_id(game_entity.entity_type)
+        self.knowledge_graph.add_entity(entity_id, game_entity.model_dump(mode="json"))
+
+    def query_entities(self, entity_query: Union[
+        CharacterQuery, BeastQuery, LocationQuery, ItemQuery, QuestQuery, EventQuery, FactionQuery]) -> str:
+        """
+        Query entities of the game world knowledge graph.
+        Args:
+           entity_query(Union[CharacterQuery, BeastQuery, LocationQuery, ItemQuery, QuestQuery, EventQuery, FactionQuery]): The entity query to query.
+        """
+        if isinstance(entity_query, CharacterQuery):
+            return self.query_characters(
+                character_type=entity_query.character_type,
+                name=entity_query.name,
+                age=entity_query.age,
+                race=entity_query.race,
+                gender=entity_query.gender,
+                location=entity_query.location
+            )
+        elif isinstance(entity_query, BeastQuery):
+            return self.query_beasts(
+                beast_type=entity_query.beast_type,
+                name=entity_query.name,
+                age=entity_query.age,
+                race=entity_query.race,
+                gender=entity_query.gender,
+                location=entity_query.location
+            )
+        elif isinstance(entity_query, LocationQuery):
+            return self.query_locations(
+                location_type=entity_query.location_type,
+                name=entity_query.name
+            )
+        elif isinstance(entity_query, ItemQuery):
+            return self.query_items(
+                item_type=entity_query.item_type,
+                name=entity_query.name,
+                location=entity_query.location
+            )
+        elif isinstance(entity_query, QuestQuery):
+            return self.query_quests(
+                quest_type=entity_query.quest_type,
+                name=entity_query.name,
+                location=entity_query.location
+            )
+        elif isinstance(entity_query, EventQuery):
+            return self.query_events(
+                event_type=entity_query.event_type,
+                name=entity_query.name,
+                location=entity_query.location
+            )
+        elif isinstance(entity_query, FactionQuery):
+            return self.query_factions(
+                faction_type=entity_query.faction_type,
+                name=entity_query.name,
+                location=entity_query.location
+            )
+        else:
+            return "Invalid query type provided."
 
     def add_character(self, character: Character):
         """
@@ -503,9 +617,10 @@ class GameWorldKnowledgeGraph:
             [f"Character ID: {node}, Name: {self.knowledge_graph.graph.nodes[node]['name']}" for node in
              results])
 
-    def query_beasts(self, beast_type: Optional[BeastType] = None, name: Optional[str] = None, age: Optional[int] = None,
-                    race: Optional[str] = None,
-                    gender: Optional[str] = None, location: Optional[str] = None):
+    def query_beasts(self, beast_type: Optional[BeastType] = None, name: Optional[str] = None,
+                     age: Optional[int] = None,
+                     race: Optional[str] = None,
+                     gender: Optional[str] = None, location: Optional[str] = None):
         """
         Queries the beasts stored in the game world knowledge graph.
         Args:
@@ -736,7 +851,7 @@ class GameWorldKnowledgeGraph:
             result = f"Path from {start_entity_id} to {end_entity_id}:\n"
             for i in range(len(path) - 1):
                 edge_data = self.knowledge_graph.graph[path[i]][path[i + 1]]
-                result += f"{path[i]} --({edge_data['relationship']})--> {path[i + 1]}\n"
+                result += f"{path[i]} --({edge_data[0]["relationship"]})--> {path[i + 1]}\n"
             return result
         except nx.NetworkXNoPath:
             return f"No path found between {start_entity_id} and {end_entity_id}"
@@ -808,14 +923,20 @@ class GameWorldKnowledgeGraph:
             result += f"- {entity_id}: {entity_data.get('name', 'Unnamed entity')} ({entity_data['entity_type']})\n"
         return result
 
-    def get_tools(self):
+    def get_single_tools(self):
         return [FunctionTool(self.add_character), FunctionTool(self.add_beast), FunctionTool(self.add_location),
                 FunctionTool(self.add_item), FunctionTool(self.add_quest), FunctionTool(self.add_event),
-                FunctionTool(self.add_faction), FunctionTool(self.add_relationship), FunctionTool(self.query_characters),
+                FunctionTool(self.add_faction), FunctionTool(self.add_relationship),
+                FunctionTool(self.query_characters),
                 FunctionTool(self.query_beasts), FunctionTool(self.query_locations), FunctionTool(self.query_items),
                 FunctionTool(self.query_quests), FunctionTool(self.query_events), FunctionTool(self.query_factions),
                 FunctionTool(self.query_relationships), FunctionTool(self.query_entities_by_attribute),
-                FunctionTool(self.find_path), FunctionTool(self.get_entity_details), FunctionTool(self.get_nearby_entities)]
+                FunctionTool(self.get_entity_details), FunctionTool(self.get_nearby_entities)]
+
+    def get_unified_tools(self):
+        return [FunctionTool(self.add_entity), FunctionTool(self.query_entities),
+                FunctionTool(self.query_relationships), FunctionTool(self.query_entities_by_attribute),
+                FunctionTool(self.get_entity_details), FunctionTool(self.get_nearby_entities)]
 
     def save(self, filename: str) -> None:
         """

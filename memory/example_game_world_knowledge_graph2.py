@@ -121,7 +121,7 @@ def main():
     print(game_world.query_relationships("Character-1"))
 
     print("\nFinding path:")
-    print(game_world.find_path("Character-1", "Beast-1"))
+    print(game_world.find_path("Item-1", "Character-1"))
 
     print("\nGetting entity details:")
     print(game_world.get_entity_details("Character-1"))
