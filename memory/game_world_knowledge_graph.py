@@ -7,6 +7,8 @@ import graphviz
 import networkx as nx
 from pydantic import BaseModel, Field
 
+from ToolAgents import FunctionTool
+
 
 class KnowledgeGraph:
     def __init__(self):
@@ -486,7 +488,7 @@ class GameWorldKnowledgeGraph:
             [f"Character ID: {node}, Name: {self.knowledge_graph.graph.nodes[node]['character_name']}" for node in
              results])
 
-    def query_beast(self, beast_type: Optional[BeastType] = None, name: Optional[str] = None, age: Optional[int] = None,
+    def query_beasts(self, beast_type: Optional[BeastType] = None, name: Optional[str] = None, age: Optional[int] = None,
                     race: Optional[str] = None,
                     gender: Optional[str] = None, location: Optional[str] = None):
         """
@@ -530,7 +532,7 @@ class GameWorldKnowledgeGraph:
         return "\n".join(
             [f"Beast ID: {node}, Name: {self.knowledge_graph.graph.nodes[node]['beast_name']}" for node in results])
 
-    def query_location(self, location_type: Optional[LocationType] = None, name: Optional[str] = None):
+    def query_locations(self, location_type: Optional[LocationType] = None, name: Optional[str] = None):
         """
         Queries the locations stored in the game world knowledge graph.
         Args:
@@ -790,6 +792,15 @@ class GameWorldKnowledgeGraph:
         for entity_id, entity_data in nearby_entities:
             result += f"- {entity_id}: {entity_data.get('name', 'Unnamed entity')} ({entity_data['entity_type']})\n"
         return result
+
+    def get_tools(self):
+        return [FunctionTool(self.add_character), FunctionTool(self.add_beast), FunctionTool(self.add_location),
+                FunctionTool(self.add_item), FunctionTool(self.add_quest), FunctionTool(self.add_event),
+                FunctionTool(self.add_faction), FunctionTool(self.add_relationship), FunctionTool(self.query_characters),
+                FunctionTool(self.query_beasts), FunctionTool(self.query_locations), FunctionTool(self.query_items),
+                FunctionTool(self.query_quests), FunctionTool(self.query_events), FunctionTool(self.query_factions),
+                FunctionTool(self.query_relationships), FunctionTool(self.query_entities_by_attribute),
+                FunctionTool(self.find_path), FunctionTool(self.get_entity_details), FunctionTool(self.get_nearby_entities)]
 
     def save(self, filename: str) -> None:
         """
