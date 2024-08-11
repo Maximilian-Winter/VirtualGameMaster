@@ -368,7 +368,7 @@ class GameWorldKnowledgeGraph:
         """
         entity_id = self.generate_entity_id(EntityType.CHARACTER)
         self.knowledge_graph.add_entity(entity_id, character.model_dump(mode="json"))
-        return entity_id
+        return f"Character '{character.character_name}' added successfully with ID: {entity_id}"
 
     def add_beast(self, beast: Beast):
         """
@@ -378,7 +378,7 @@ class GameWorldKnowledgeGraph:
         """
         entity_id = self.generate_entity_id(EntityType.BEAST)
         self.knowledge_graph.add_entity(entity_id, beast.model_dump(mode="json"))
-        return entity_id
+        return f"Beast '{beast.beast_name}' added successfully with ID: {entity_id}"
 
     def add_location(self, location: Location):
         """
@@ -388,7 +388,7 @@ class GameWorldKnowledgeGraph:
         """
         entity_id = self.generate_entity_id(EntityType.LOCATION)
         self.knowledge_graph.add_entity(entity_id, location.model_dump(mode="json"))
-        return entity_id
+        return f"Location '{location.location_name}' added successfully with ID: {entity_id}"
 
     def add_item(self, item: Item):
         """
@@ -398,7 +398,7 @@ class GameWorldKnowledgeGraph:
         """
         entity_id = self.generate_entity_id(EntityType.ITEM)
         self.knowledge_graph.add_entity(entity_id, item.model_dump(mode="json"))
-        return entity_id
+        return f"Item '{item.item_name}' added successfully with ID: {entity_id}"
 
     def add_quest(self, quest: Quest):
         """
@@ -408,7 +408,7 @@ class GameWorldKnowledgeGraph:
         """
         entity_id = self.generate_entity_id(EntityType.QUEST)
         self.knowledge_graph.add_entity(entity_id, quest.model_dump(mode="json"))
-        return entity_id
+        return f"Quest '{quest.quest_name}' added successfully with ID: {entity_id}"
 
     def add_event(self, event: Event):
         """
@@ -418,7 +418,7 @@ class GameWorldKnowledgeGraph:
         """
         entity_id = self.generate_entity_id(EntityType.EVENT)
         self.knowledge_graph.add_entity(entity_id, event.model_dump(mode="json"))
-        return entity_id
+        return f"Event '{event.event_name}' added successfully with ID: {entity_id}"
 
     def add_faction(self, faction: Faction):
         """
@@ -428,7 +428,7 @@ class GameWorldKnowledgeGraph:
         """
         entity_id = self.generate_entity_id(EntityType.FACTION)
         self.knowledge_graph.add_entity(entity_id, faction.model_dump(mode="json"))
-        return entity_id
+        return f"Faction '{faction.faction_name}' added successfully with ID: {entity_id}"
 
     def add_relationship(self, relationship: Relationship):
         """
@@ -439,7 +439,7 @@ class GameWorldKnowledgeGraph:
         self.knowledge_graph.add_relationship(relationship.first_entity_id, relationship.second_entity_id,
                                               relationship.relationship_type.value,
                                               {"description": relationship.description})
-        return "Relationship successful added to game world knowledge graph."
+        return f"Relationship '{relationship.relationship_type.value}' added successfully between entities {relationship.first_entity_id} and {relationship.second_entity_id}"
 
     def query_characters(self, character_type: Optional[CharacterType] = None, name: Optional[str] = None,
                          age: Optional[int] = None, race: Optional[str] = None,
@@ -471,13 +471,20 @@ class GameWorldKnowledgeGraph:
             if location:
                 # Check if character is related to the given location
                 for _, target, edge_data in self.knowledge_graph.graph.edges(node, data=True):
-                    if ((edge_data['relationship'] == RelationshipType.INHABITS.value or edge_data['relationship'] == RelationshipType.LOCATED_IN.value or edge_data['relationship'] == RelationshipType.RESIDES_IN.value) and
+                    if ((edge_data['relationship'] == RelationshipType.INHABITS.value or edge_data[
+                        'relationship'] == RelationshipType.LOCATED_IN.value or edge_data[
+                             'relationship'] == RelationshipType.RESIDES_IN.value) and
                             location.lower() in self.knowledge_graph.graph.nodes[target]['location_name'].lower()):
                         return True
                 return False
             return True
 
-        return [node for node, data in self.knowledge_graph.graph.nodes(data=True) if filter_func(node, data)]
+        results = [node for node, data in self.knowledge_graph.graph.nodes(data=True) if filter_func(node, data)]
+        if not results:
+            return "No characters found matching the given criteria."
+        return "\n".join(
+            [f"Character ID: {node}, Name: {self.knowledge_graph.graph.nodes[node]['character_name']}" for node in
+             results])
 
     def query_beast(self, beast_type: Optional[BeastType] = None, name: Optional[str] = None, age: Optional[int] = None,
                     race: Optional[str] = None,
@@ -509,13 +516,19 @@ class GameWorldKnowledgeGraph:
             if location:
                 # Check if beast is related to the given location
                 for _, target, edge_data in self.knowledge_graph.graph.edges(node, data=True):
-                    if ((edge_data['relationship'] == RelationshipType.INHABITS.value or edge_data['relationship'] == RelationshipType.LOCATED_IN.value or edge_data['relationship'] == RelationshipType.RESIDES_IN.value) and
+                    if ((edge_data['relationship'] == RelationshipType.INHABITS.value or edge_data[
+                        'relationship'] == RelationshipType.LOCATED_IN.value or edge_data[
+                             'relationship'] == RelationshipType.RESIDES_IN.value) and
                             location.lower() in self.knowledge_graph.graph.nodes[target]['location_name'].lower()):
                         return True
                 return False
             return True
 
-        return [node for node, data in self.knowledge_graph.graph.nodes(data=True) if filter_func(node, data)]
+        results = [node for node, data in self.knowledge_graph.graph.nodes(data=True) if filter_func(node, data)]
+        if not results:
+            return "No beasts found matching the given criteria."
+        return "\n".join(
+            [f"Beast ID: {node}, Name: {self.knowledge_graph.graph.nodes[node]['beast_name']}" for node in results])
 
     def query_location(self, location_type: Optional[LocationType] = None, name: Optional[str] = None):
         """
@@ -534,9 +547,15 @@ class GameWorldKnowledgeGraph:
                 return False
             return True
 
-        return [node for node, data in self.knowledge_graph.graph.nodes(data=True) if filter_func(node, data)]
+        results = [node for node, data in self.knowledge_graph.graph.nodes(data=True) if filter_func(node, data)]
+        if not results:
+            return "No locations found matching the given criteria."
+        return "\n".join(
+            [f"Location ID: {node}, Name: {self.knowledge_graph.graph.nodes[node]['location_name']}" for node in
+             results])
 
-    def query_items(self, item_type: Optional[ItemType] = None, name: Optional[str] = None, location: Optional[str] = None):
+    def query_items(self, item_type: Optional[ItemType] = None, name: Optional[str] = None,
+                    location: Optional[str] = None):
         """
         Queries the items stored in the game world knowledge graph.
         Args:
@@ -560,9 +579,14 @@ class GameWorldKnowledgeGraph:
                 return False
             return True
 
-        return [node for node, data in self.knowledge_graph.graph.nodes(data=True) if filter_func(node, data)]
+        results = [node for node, data in self.knowledge_graph.graph.nodes(data=True) if filter_func(node, data)]
+        if not results:
+            return "No items found matching the given criteria."
+        return "\n".join(
+            [f"Item ID: {node}, Name: {self.knowledge_graph.graph.nodes[node]['item_name']}" for node in results])
 
-    def query_quests(self, quest_type: Optional[QuestType] = None, name: Optional[str] = None, location: Optional[str] = None):
+    def query_quests(self, quest_type: Optional[QuestType] = None, name: Optional[str] = None,
+                     location: Optional[str] = None):
         """
         Queries the quests stored in the game world knowledge graph.
         Args:
@@ -586,9 +610,14 @@ class GameWorldKnowledgeGraph:
                 return False
             return True
 
-        return [node for node, data in self.knowledge_graph.graph.nodes(data=True) if filter_func(node, data)]
+        results = [node for node, data in self.knowledge_graph.graph.nodes(data=True) if filter_func(node, data)]
+        if not results:
+            return "No quests found matching the given criteria."
+        return "\n".join(
+            [f"Quest ID: {node}, Name: {self.knowledge_graph.graph.nodes[node]['quest_name']}" for node in results])
 
-    def query_events(self, event_type: Optional[EventType] = None, name: Optional[str] = None, location: Optional[str] = None):
+    def query_events(self, event_type: Optional[EventType] = None, name: Optional[str] = None,
+                     location: Optional[str] = None):
         """
         Queries the events stored in the game world knowledge graph.
         Args:
@@ -612,9 +641,14 @@ class GameWorldKnowledgeGraph:
                 return False
             return True
 
-        return [node for node, data in self.knowledge_graph.graph.nodes(data=True) if filter_func(node, data)]
+        results = [node for node, data in self.knowledge_graph.graph.nodes(data=True) if filter_func(node, data)]
+        if not results:
+            return "No events found matching the given criteria."
+        return "\n".join(
+            [f"Event ID: {node}, Name: {self.knowledge_graph.graph.nodes[node]['event_name']}" for node in results])
 
-    def query_factions(self, faction_type: Optional[FactionType] = None, name: Optional[str] = None, location: Optional[str] = None):
+    def query_factions(self, faction_type: Optional[FactionType] = None, name: Optional[str] = None,
+                       location: Optional[str] = None):
         """
         Queries the factions stored in the game world knowledge graph.
         Args:
@@ -638,7 +672,124 @@ class GameWorldKnowledgeGraph:
                 return False
             return True
 
-        return [node for node, data in self.knowledge_graph.graph.nodes(data=True) if filter_func(node, data)]
+        results = [node for node, data in self.knowledge_graph.graph.nodes(data=True) if filter_func(node, data)]
+        if not results:
+            return "No factions found matching the given criteria."
+        return "\n".join(
+            [f"Faction ID: {node}, Name: {self.knowledge_graph.graph.nodes[node]['faction_name']}" for node in results])
+
+    def query_relationships(self, entity_id: str, relationship_type: Optional[RelationshipType] = None):
+        """
+        Queries the relationships of a specific entity.
+
+        Args:
+            entity_id (str): The ID of the entity to query relationships for.
+            relationship_type (Optional[RelationshipType]): The type of relationship to filter by.
+
+        Returns:
+            str: A string describing the relationships found.
+        """
+        relationships = self.knowledge_graph.query_relationships(entity_id,
+                                                                 relationship_type.value if relationship_type else None)
+        if not relationships:
+            return f"No relationships found for entity {entity_id}"
+
+        result = f"Relationships for entity {entity_id}:\n"
+        for rel in relationships:
+            result += f"- {rel['type']} to {rel['target']} ({rel['attributes'].get('description', 'No description')})\n"
+        return result
+
+    def find_path(self, start_entity_id: str, end_entity_id: str, max_depth: int = 5):
+        """
+        Finds a path between two entities in the knowledge graph.
+
+        Args:
+            start_entity_id (str): The ID of the starting entity.
+            end_entity_id (str): The ID of the ending entity.
+            max_depth (int): The maximum depth to search for a path.
+
+        Returns:
+            str: A string describing the path found or a message if no path is found.
+        """
+        try:
+            path = self.knowledge_graph.find_path(start_entity_id, end_entity_id)
+            if len(path) > max_depth:
+                return f"Path found but exceeds maximum depth of {max_depth}"
+
+            result = f"Path from {start_entity_id} to {end_entity_id}:\n"
+            for i in range(len(path) - 1):
+                edge_data = self.knowledge_graph.graph[path[i]][path[i + 1]]
+                result += f"{path[i]} --({edge_data['relationship']})--> {path[i + 1]}\n"
+            return result
+        except nx.NetworkXNoPath:
+            return f"No path found between {start_entity_id} and {end_entity_id}"
+
+    def get_entity_details(self, entity_id: str):
+        """
+        Retrieves detailed information about a specific entity.
+
+        Args:
+            entity_id (str): The ID of the entity to retrieve details for.
+
+        Returns:
+            str: A string containing the detailed information of the entity.
+        """
+        try:
+            entity_data = self.knowledge_graph.get_entity_attributes(entity_id)
+            result = f"Details for entity {entity_id}:\n"
+            for key, value in entity_data.items():
+                result += f"{key}: {value}\n"
+            return result
+        except KeyError:
+            return f"No entity found with ID {entity_id}"
+
+    def query_entities_by_attribute(self, attribute_name: str, attribute_value: Any):
+        """
+        Queries entities based on a specific attribute value.
+
+        Args:
+            attribute_name (str): The name of the attribute to query.
+            attribute_value (Any): The value of the attribute to match.
+
+        Returns:
+            str: A string listing the entities that match the attribute criteria.
+        """
+        matching_entities = self.knowledge_graph.query_entities({attribute_name: attribute_value})
+        if not matching_entities:
+            return f"No entities found with {attribute_name} = {attribute_value}"
+
+        result = f"Entities with {attribute_name} = {attribute_value}:\n"
+        for entity_id in matching_entities:
+            entity_data = self.knowledge_graph.get_entity_attributes(entity_id)
+            result += f"- {entity_id}: {entity_data.get('name', 'Unnamed entity')}\n"
+        return result
+
+    def get_nearby_entities(self, location_id: str, entity_type: Optional[EntityType] = None, max_distance: int = 2):
+        """
+        Finds entities that are near a specified location in the knowledge graph.
+
+        Args:
+            location_id (str): The ID of the location to search from.
+            entity_type (Optional[EntityType]): The type of entity to filter by.
+            max_distance (int): The maximum distance (in graph edges) to search.
+
+        Returns:
+            str: A string listing the nearby entities found.
+        """
+        subgraph = self.knowledge_graph.get_subgraph(location_id, max_depth=max_distance)
+        nearby_entities = []
+
+        for node in subgraph['nodes']:
+            if node["id"] != location_id and (entity_type is None or node['entity_type'] == entity_type.value):
+                nearby_entities.append((node["id"], node))
+
+        if not nearby_entities:
+            return f"No nearby entities found within {max_distance} steps of {location_id}"
+
+        result = f"Entities near {location_id} (within {max_distance} steps):\n"
+        for entity_id, entity_data in nearby_entities:
+            result += f"- {entity_id}: {entity_data.get('name', 'Unnamed entity')} ({entity_data['entity_type']})\n"
+        return result
 
     def save(self, filename: str) -> None:
         """
