@@ -605,7 +605,7 @@ class GameWorldKnowledgeGraph:
                     if ((edge_data['relationship'] == RelationshipType.INHABITS.value or edge_data[
                         'relationship'] == RelationshipType.LOCATED_IN.value or edge_data[
                              'relationship'] == RelationshipType.RESIDES_IN.value) and
-                            location.lower() in self.knowledge_graph.graph.nodes[target]['location_name'].lower()):
+                            location.lower() in self.knowledge_graph.graph.nodes[target]['name'].lower()):
                         return True
                 return False
             return True
@@ -651,7 +651,7 @@ class GameWorldKnowledgeGraph:
                     if ((edge_data['relationship'] == RelationshipType.INHABITS.value or edge_data[
                         'relationship'] == RelationshipType.LOCATED_IN.value or edge_data[
                              'relationship'] == RelationshipType.RESIDES_IN.value) and
-                            location.lower() in self.knowledge_graph.graph.nodes[target]['location_name'].lower()):
+                            location.lower() in self.knowledge_graph.graph.nodes[target]['name'].lower()):
                         return True
                 return False
             return True
@@ -875,7 +875,7 @@ class GameWorldKnowledgeGraph:
         except KeyError:
             return f"No entity found with ID {entity_id}"
 
-    def query_entities_by_attribute(self, attribute_name: str, attribute_value: Any):
+    def query_entities_by_attribute(self, attribute_name: str, attribute_value: str):
         """
         Queries entities based on a specific attribute value.
 
@@ -934,7 +934,7 @@ class GameWorldKnowledgeGraph:
                 FunctionTool(self.get_entity_details), FunctionTool(self.get_nearby_entities)]
 
     def get_unified_tools(self):
-        return [FunctionTool(self.add_entity), FunctionTool(self.query_entities),
+        return [FunctionTool(self.add_entity), FunctionTool(self.add_relationship), FunctionTool(self.query_entities),
                 FunctionTool(self.query_relationships), FunctionTool(self.query_entities_by_attribute),
                 FunctionTool(self.get_entity_details), FunctionTool(self.get_nearby_entities)]
 
