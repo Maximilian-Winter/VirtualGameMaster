@@ -282,9 +282,9 @@ class Character(GameEntity):
     entity_type: EntityType = EntityType.CHARACTER
     name: str = Field(..., description="The name of the character.")
     character_type: CharacterType = Field(..., description="The type of character.")
-    age: int = Field(..., description="The age of the character.")
-    race: str = Field(..., description="The race of the character.")
-    gender: str = Field(..., description="The gender of the character.")
+    age: Optional[int] = Field(..., description="The age of the character.")
+    race: Optional[str] =Field(..., description="The race of the character.")
+    gender: Optional[str]= Field(..., description="The gender of the character.")
     description: str = Field(..., description="The description of the character.")
 
 
@@ -295,9 +295,9 @@ class Beast(GameEntity):
     entity_type: EntityType = EntityType.BEAST
     name: str = Field(..., description="The name of the beast.")
     beast_type: BeastType = Field(..., description="The type of the beast.")
-    age: int = Field(..., description="The age of the beast.")
-    race: str = Field(..., description="The race of the beast.")
-    gender: str = Field(..., description="The gender of the beast.")
+    age: Optional[int] = Field(..., description="The age of the beast.")
+    race: Optional[str] = Field(..., description="The race of the beast.")
+    gender: Optional[str] = Field(..., description="The gender of the beast.")
     description: str = Field(..., description="The description of the beast.")
 
 
@@ -430,9 +430,12 @@ class GameWorldKnowledgeGraph:
         Adds a game entity to the game world knowledge graph. Returns the entity id of the entity added.
         Args:
             game_entity(Union[Character, Beast, Location, Item, Quest, Event, Faction]): The entity to add.
+        Returns:
+            (str) The entity id of the entity added.
         """
         entity_id = self.generate_entity_id(game_entity.entity_type)
         self.knowledge_graph.add_entity(entity_id, game_entity.model_dump(mode="json"))
+        return entity_id
 
     def query_entities(self, entity_query: Union[
         CharacterQuery, BeastQuery, LocationQuery, ItemQuery, QuestQuery, EventQuery, FactionQuery]) -> str:
