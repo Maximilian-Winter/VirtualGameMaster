@@ -133,41 +133,48 @@ class KnowledgeGraph:
 
 
 class GameEntityType(str, Enum):
+    RACE = "Race"
     CHARACTER = "Character"
     CREATURE = "Creature"
     LOCATION = "Location"
-    ITEM = "Item"
-    QUEST = "Quest"
-    EVENT = "Event"
     FACTION = "Faction"
+    EVENT = "Event"
+    ITEM = "Item"
+    LORE = "Lore"
+    PLANE = "Plane of Existence"
+    ERA = "Era"
+    CULTURE = "Culture"
+    RELATIONSHIP = "Relationship"
+    PROFESSION = "Profession"
+    LANDMARK = "Landmark"
+    ARTIFACT = "Artifact"
+    LEGEND = "Legend"
+    WORLD_INFO = "World Information"
+    MISC = "Miscellaneous"
 
 
 class GameEntity(BaseModel):
-    entity_type: GameEntityType = Field(..., description="The type of entity")
+    entity_id: str = Field(default_factory=str, description="The entity id")
+    entity_type: str = Field(..., description="The type of entity")
     entity_data: Dict[str, Any] = Field(..., description="The entity data")
 
 
 class GameEntityQuery(BaseModel):
-    entity_type: GameEntityType = Field(..., description="The type of entity to query")
+    entity_type: str = Field(..., description="The type of entity to query")
     entity_data_filter: Optional[Dict[str, Any]] = Field(None, description="The entity data filter")
 
 
 class GameWorldKnowledgeGraph:
     def __init__(self):
         self.knowledge_graph = KnowledgeGraph()
-        self.entity_counters = {
-            GameEntityType.CHARACTER: 0,
-            GameEntityType.CREATURE: 0,
-            GameEntityType.LOCATION: 0,
-            GameEntityType.ITEM: 0,
-            GameEntityType.QUEST: 0,
-            GameEntityType.EVENT: 0,
-            GameEntityType.FACTION: 0
-        }
+        self.entity_counters = {}
 
     def generate_entity_id(self, entity_type: GameEntityType) -> str:
-        self.entity_counters[entity_type] += 1
-        return f"{entity_type.value}-{self.entity_counters[entity_type]}"
+        if entity_type in self.entity_counters:
+            self.entity_counters[entity_type] += 1
+        else:
+            self.entity_counters[entity_type] = 1
+        return f"{entity_type}-{self.entity_counters[entity_type]}"
 
     def add_entity(self, game_entity: GameEntity):
         """
@@ -179,6 +186,7 @@ class GameWorldKnowledgeGraph:
         """
         entity_id = self.generate_entity_id(game_entity.entity_type)
         self.knowledge_graph.add_entity(entity_id, game_entity.model_dump(mode="json"))
+        game_entity.__setattr__("entity_id", entity_id)
         return entity_id
 
     def query_entities(self, entity_query: GameEntityQuery) -> str:
@@ -192,7 +200,7 @@ class GameWorldKnowledgeGraph:
         # First, filter entities by type
         matching_entities: List[Dict[str, Any]] = []
         for node, data in self.knowledge_graph.graph.nodes(data=True):
-            if data.get('entity_type') == entity_query.entity_type.value:
+            if data.get('entity_type').lower() == entity_query.entity_type.lower():
                 matching_entities.append({'id': node, **data})
 
         # Then, apply the entity_data_filter if provided
@@ -207,9 +215,9 @@ class GameWorldKnowledgeGraph:
 
         # Format the results
         if not matching_entities:
-            return f"No entities found matching the query for type: {entity_query.entity_type.value}"
+            return f"No entities found matching the query for type: {entity_query.entity_type}"
 
-        result = f"Entities of type {entity_query.entity_type.value}:\n"
+        result = f"Entities of type {entity_query.entity_type}:\n"
         for entity in matching_entities:
             result += f"- ID: {entity['id']}\n"
             result += f"  Name: {entity['entity_data'].get('name', 'Unnamed')}\n"
@@ -233,7 +241,7 @@ class GameWorldKnowledgeGraph:
         self.knowledge_graph.add_relationship(first_game_entity_id, second_game_entity_id,
                                               relationship_type,
                                               {"description": description} if description else {})
-        return f"Relationship 'relationship_type' added successfully between entities {first_game_entity_id} and {second_game_entity_id}"
+        return f"Relationship '{relationship_type}' added successfully between entities {first_game_entity_id} and {second_game_entity_id}"
 
     def query_relationships(self, game_entity_id: str, relationship_type: Optional[str]):
         """
@@ -243,7 +251,7 @@ class GameWorldKnowledgeGraph:
             relationship_type(Optional[str]): The relationship type.
         """
         results = self.knowledge_graph.query_relationships(game_entity_id, relationship_type)
-        return '\n'.join(json.dumps(results, indent=2))
+        return json.dumps(results, indent=2)
 
     def find_path(self, start_entity_id: str, end_entity_id: str, max_depth: int = 5):
         """
@@ -328,7 +336,7 @@ class GameWorldKnowledgeGraph:
 
         for node in subgraph['nodes']:
             if node["id"] != location_id and (
-                    game_entity_type is None or node['game_entity_type'] == game_entity_type.value):
+                    game_entity_type is None or node['game_entity_type'] == game_entity_type):
                 nearby_entities.append((node["id"], node))
 
         if not nearby_entities:
@@ -344,7 +352,7 @@ class GameWorldKnowledgeGraph:
                 FunctionTool(self.query_relationships), FunctionTool(self.query_entities_by_attribute),
                 FunctionTool(self.get_entity_details), FunctionTool(self.get_nearby_entities)]
 
-    def save(self, filename: str) -> None:
+    def save_game(self, filename: str) -> None:
         """
         Save the GameWorldKnowledgeGraph to a JSON file.
 
@@ -363,21 +371,15 @@ class GameWorldKnowledgeGraph:
         with open(filename, 'w') as f:
             json.dump(data, f)
 
-    @classmethod
-    def load(cls, filename: str) -> 'GameWorldKnowledgeGraph':
+    def load_game(self, filename: str) -> None:
         """
         Load a GameWorldKnowledgeGraph from a JSON file.
 
         Args:
             filename (str): The name of the file to load from.
-
-        Returns:
-            GameWorldKnowledgeGraph: The loaded GameWorldKnowledgeGraph instance.
         """
         with open(filename, 'r', encoding="utf-8") as f:
             data = json.load(f)
 
-        game_world = cls()
-        game_world.knowledge_graph = KnowledgeGraph.load_from_json(data['knowledge_graph_filename'])
-        game_world.entity_counters = data['entity_counters']
-        return game_world
+        self.knowledge_graph = KnowledgeGraph.load_from_json(data['knowledge_graph_filename'])
+        self.entity_counters = data['entity_counters']

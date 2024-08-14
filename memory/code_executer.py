@@ -11,7 +11,7 @@ from ToolAgents.utilities import ChatHistory
 
 class PythonCodeExecutor:
     def __init__(self, tools: List[FunctionTool] = None, predefined_classes: list = None):
-        self.code_pattern = re.compile(r'```python\n(.*?)```', re.DOTALL)
+        self.code_pattern = re.compile(r'```python_interpreter\n(.*?)```', re.DOTALL)
         self.global_context = {}
         self.predefined_functions = {}
         self.predefined_classes = {}
@@ -70,14 +70,13 @@ class PythonCodeExecutor:
 
     def extract_code(self, response):
         matches = self.code_pattern.findall(response)
-        return '\n'.join(match.strip() for match in matches)
+        return [match.strip() for match in matches]
 
     def execute_code(self, code):
         old_stdout = sys.stdout
         old_stderr = sys.stderr
         redirected_output = sys.stdout = io.StringIO()
         redirected_error = sys.stderr = io.StringIO()
-        global_context = self.global_context
         try:
             # Parse the code into an AST
             tree = ast.parse(code)
@@ -86,12 +85,12 @@ class PythonCodeExecutor:
             for stmt in tree.body:
                 if isinstance(stmt, ast.Expr):
                     # If it's an expression, evaluate it and print the result if it's not None
-                    result = eval(ast.unparse(stmt), global_context)
+                    result = eval(ast.unparse(stmt), self.global_context)
                     if result is not None:
                         print(repr(result))
                 else:
                     # For other statements, just execute them
-                    exec(ast.unparse(stmt), global_context)
+                    exec(ast.unparse(stmt), self.global_context)
 
             output = redirected_output.getvalue()
             error = redirected_error.getvalue()
@@ -103,17 +102,28 @@ class PythonCodeExecutor:
             sys.stderr = old_stderr
 
     def run(self, response):
-        code = self.extract_code(response)
-        if code:
-            output, error = self.execute_code(code)
-            if error:
-                return f"Error occurred:\n{error}"
-            elif output:
-                return f"{output}"
-            else:
-                return "Code executed successfully!"
+        code_blocks = self.extract_code(response)
+        if code_blocks:
+            outputs = []
+            has_error = False
+            for code in code_blocks:
+                output, error = self.execute_code(code)
+                if error:
+                    outputs.append(f"Error occurred:\n{error}")
+                    has_error = True
+                elif output:
+                    outputs.append(f"{output}")
+                else:
+                    outputs.append("Code executed successfully!")
+            output = ""
+            counter = 1
+            for out in outputs:
+                output += f"{counter}. Codeblock Output: {out}\n"
+                counter += 1
+            return output, has_error
+
         else:
-            return "No Python code found in the response."
+            return "No Python code found in the response.", False
 
     def get_variable(self, var_name):
         return self.global_context.get(var_name, f"Variable '{var_name}' not found in the context.")
@@ -150,10 +160,11 @@ def run_code_agent(agent, settings, chat_history: ChatHistory, user_input: str,
     while True:
         chat_history.add_assistant_message(message=full_response)
         if "```python_interpreter" in full_response:
-            code_ex = python_code_executor.run(full_response)
+            full_response += "\n```\n"
+            code_ex, has_error = python_code_executor.run(full_response)
             print("Python Execution Output: ")
             print(code_ex)
-            chat_history.add_message("user", "Results of last Code execution:\n" + code_ex)
+            chat_history.add_message("user", "This is an automatic response from the Python Interpreter:\n\nResults of last Code execution:\n" + code_ex)
 
             print("Response: ", end="")
             result_gen = agent.get_streaming_response(
