@@ -1,33 +1,21 @@
-from ToolAgents.agents import MistralAgent, HostedToolAgent
-from ToolAgents.agents.mistral_agent_parts import MistralToolCallHandler
-from ToolAgents.interfaces import HostedLLMProvider
-from ToolAgents.interfaces.llm_tokenizer import HuggingFaceTokenizer
-from ToolAgents.provider import LlamaCppServerProvider
+from ToolAgents.provider import AnthropicChatAPI, AnthropicSettings
+from ToolAgents.agents import ChatAPIAgent
 from ToolAgents.utilities import ChatHistory
 from VirtualGameMaster.game_state import GameState
-from VirtualGameMaster.memory.game_world_knowledge_graph import GameWorldKnowledgeGraph, CharacterType, Character, \
-    CharacterQuery, BeastType, Beast, BeastQuery, LocationType, Location, LocationQuery, ItemType, Item, ItemQuery, \
+from VirtualGameMaster.memory.game_world_knowledge_graph import GameWorldKnowledgeGraph, Character, \
+    CharacterQuery, RaceQuery, Creature, CreatureQuery, LocationType, Location, LocationQuery, ItemType, Item, ItemQuery, \
     FactionType, Faction, FactionQuery, QuestType, Quest, QuestQuery, EventType, Event, EventQuery, Relationship, \
-    RelationshipType
+    RelationshipType, Race, RaceType
 from VirtualGameMaster.message_template import MessageTemplate
 from code_executer import PythonCodeExecutor, system_message_code_agent, run_code_agent
 
-provider = LlamaCppServerProvider("http://127.0.0.1:8080/")
-
-class MistralAltAgent(HostedToolAgent):
-    def __init__(self, provider: HostedLLMProvider, tokenizer_file: str = "NousResearch/Hermes-2-Pro-Llama-3-8B", debug_output: bool = False):
-        super().__init__(provider, HuggingFaceTokenizer(tokenizer_file), MistralToolCallHandler(debug_output),
-                         debug_output)
-
-agent = MistralAgent(provider=provider, debug_output=True)
+provider = AnthropicChatAPI("", "claude-3-5-sonnet-20240620")
+agent = ChatAPIAgent(chat_api=provider, debug_output=True)
 
 settings = provider.get_default_settings()
-settings.neutralize_all_samplers()
-settings.temperature = 0.1
+settings.temperature = 0.7
 
-
-settings.set_stop_tokens(["</s>"], None)
-settings.set_max_new_tokens(4096)
+settings.max_tokens = 4096
 
 game_state = GameState("../game_starters/rpg_candlekeep.yaml")
 game_world = GameWorldKnowledgeGraph()
@@ -38,14 +26,6 @@ system_prompt_template = f"""# Instructions
 Your task is to act as a Game Master (GM) for a text-based role-playing game. Your primary goal is to create an engaging, immersive, and dynamic role-playing experience for the player. You will narrate the story, describe the world, control non-player characters (NPCs), and adjudicate rules based on the provided game state and the game world knowledge graph.
 
 You have access to a Python code interpreter that allows you to execute Python code to interact with the game world knowledge graph.
-
-## Using the Python Interpreter
-
-To use the Python code interpreter, write the code you want to execute in a markdown 'python_interpreter' code block. For example:
-
-```python_interpreter
-print('Hello, World!')
-```
 
 ## Core Responsibilities
 
@@ -108,6 +88,13 @@ To enhance your narration:
 - Be prepared to improvise and adapt to unexpected player actions while maintaining narrative consistency.
 - If the player attempts an action that seems out of character or inconsistent with their established abilities, seek confirmation: "That seems unusual for [character name]. Are you sure that's what you want to do?"
 
+## Using the Python Interpreter
+
+To use the Python code interpreter, write the code you want to execute in a markdown 'python_interpreter' code block. For example:
+
+```python_interpreter
+print('Hello, World!')
+```
 
 ## Response Format
 
@@ -291,9 +278,8 @@ When using the information from the game state sections and the Game Knowledge G
 - Be prepared to use query functions to check existing entities and relationships before adding new ones to maintain consistency.
 
 ---
-
 Remember, your role is to create an immersive, reactive, and engaging game world. Use the provided game state and the Game Knowledge Graph as a foundation, but don't be afraid to expand upon it creatively while maintaining consistency. Your goal is to deliver a rich, personalized gaming experience that responds dynamically to the player's choices and actions.
----"""
+"""
 
 system_message_template = MessageTemplate.from_string(system_prompt_template)
 chat_history = ChatHistory()
@@ -301,13 +287,15 @@ chat_history = ChatHistory()
 chat_history.add_system_message(system_message_template.generate_message_content(game_state.template_fields))
 
 python_code_executor = PythonCodeExecutor(
-    tools=tools, predefined_classes=[Relationship, RelationshipType, CharacterType, Character, CharacterQuery, BeastType, Beast, BeastQuery, LocationType, Location, LocationQuery, ItemType, Item, ItemQuery, FactionType, Faction, FactionQuery, QuestType, Quest, QuestQuery, EventType, Event, EventQuery])
+    tools=tools,
+    predefined_classes=[Race, RaceType, Relationship, RelationshipType, RaceQuery, Character, CharacterQuery, Creature, LocationType, Location, LocationQuery, ItemType, Item, ItemQuery, FactionType,
+                        Faction, FactionQuery, QuestType, Quest, QuestQuery, EventType, Event, EventQuery])
 
 prompt = "Add the current game state to the knowledge graph with all details."
 
 run_code_agent(agent=agent, settings=settings, chat_history=chat_history, user_input=prompt,
                python_code_executor=python_code_executor)
 
-game_world.save("game_world.json")
+game_world.save("game_world_anthropic.json")
 
 chat_history.save_history("./test_chat_history_after_mistral.json")

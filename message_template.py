@@ -7,7 +7,7 @@ class MessageTemplate:
     Class representing a prompt template.
 
     Methods:
-        generate_prompt(*args, **kwargs) -> str:
+        generate_message_content(*args, **kwargs) -> str:
         Generate a prompt by replacing placeholders in the template with values.
 
     Class Methods:

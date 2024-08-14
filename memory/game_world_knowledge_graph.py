@@ -101,7 +101,6 @@ class KnowledgeGraph:
             format: Output format (e.g., "png", "pdf", "svg")
         """
         dot = graphviz.Digraph(comment="Knowledge Graph")
-        dot.attr(rankdir="LR", size="8,5")
 
         # Add nodes
         for node, data in self.graph.nodes(data=True):
@@ -134,8 +133,9 @@ class KnowledgeGraph:
 
 
 class EntityType(str, Enum):
+    RACE = "Race"
     CHARACTER = "Character"
-    BEAST = "Beast"
+    CREATURE = "Creature"
     LOCATION = "Location"
     ITEM = "Item"
     QUEST = "Quest"
@@ -143,17 +143,12 @@ class EntityType(str, Enum):
     FACTION = "Faction"
 
 
-class CharacterType(str, Enum):
-    NPC = "Non-Player-Character"
-    PLAYER = "Player-Character"
-    DEITY = "Deity"
-    HISTORICAL_FIGURE = "Historical-Figure"
-
-
-class BeastType(str, Enum):
+class RaceType(str, Enum):
     ANIMAL = "Animal"
     MONSTER = "Monster"
     NON_MONSTER = "Non-Monster"
+    DEITY = "Deity"
+    HUMANOID = "Humanoid"
     MYTHICAL = "Mythical"
     UNDEAD = "Undead"
     CONSTRUCT = "Construct"
@@ -275,28 +270,31 @@ class GameEntity(BaseModel):
     entity_type: EntityType
 
 
+class Race(GameEntity):
+    entity_type: EntityType = EntityType.RACE
+    race_type: RaceType = Field(..., description="Type of the race.")
+    name: str = Field(..., description="Name of the race.")
+    description: str = Field(..., description="Description of the race.")
+
+
 class Character(GameEntity):
     """
     Represents a Character.
     """
     entity_type: EntityType = EntityType.CHARACTER
     name: str = Field(..., description="The name of the character.")
-    character_type: CharacterType = Field(..., description="The type of character.")
     age: Optional[int] = Field(..., description="The age of the character.")
-    race: Optional[str] =Field(..., description="The race of the character.")
-    gender: Optional[str]= Field(..., description="The gender of the character.")
+    gender: Optional[str] = Field(..., description="The gender of the character.")
     description: str = Field(..., description="The description of the character.")
 
 
-class Beast(GameEntity):
+class Creature(GameEntity):
     """
-    Represents a Beast.
+    Represents a Creature.
     """
-    entity_type: EntityType = EntityType.BEAST
+    entity_type: EntityType = EntityType.CREATURE
     name: str = Field(..., description="The name of the beast.")
-    beast_type: BeastType = Field(..., description="The type of the beast.")
     age: Optional[int] = Field(..., description="The age of the beast.")
-    race: Optional[str] = Field(..., description="The race of the beast.")
     gender: Optional[str] = Field(..., description="The gender of the beast.")
     description: str = Field(..., description="The description of the beast.")
 
@@ -356,25 +354,27 @@ class Relationship(BaseModel):
     Represents a Relationship.
     """
     first_entity_id: str = Field(..., description="The entity id of the first entity.")
-    relationship_type: RelationshipType = Field(..., description="The type of relationship.")
+    relationship_type: str = Field(..., description="The type of relationship.")
     second_entity_id: str = Field(..., description="The entity id of the second entity.")
     description: str = Field(..., description="The description of the relationship.")
 
 
+class RaceQuery(BaseModel):
+    race_type: Optional[RaceType] = Field(..., description="The type of race.")
+    name: Optional[str] = Field(..., description="The name of the race. Allows partial matches.")
+    description: Optional[str] = Field(..., description="The description of the race. Allows partial matches.")
+
+
 class CharacterQuery(BaseModel):
-    character_type: Optional[CharacterType] = Field(None, description="The type of character to query.")
     name: Optional[str] = Field(None, description="The name of the character to query. Allows partial matches.")
     age: Optional[int] = Field(None, description="The age of the character to query.")
-    race: Optional[str] = Field(None, description="The race of the character to query. Allows partial matches.")
     gender: Optional[str] = Field(None, description="The gender of the character to query. Allows partial matches.")
     location: Optional[str] = Field(None, description="The location of the character to query. Allows partial matches.")
 
 
-class BeastQuery(BaseModel):
-    beast_type: Optional[BeastType] = Field(None, description="The type of beast to query.")
+class CreatureQuery(BaseModel):
     name: Optional[str] = Field(None, description="The name of the beast to query. Allows partial matches.")
     age: Optional[int] = Field(None, description="The age of the beast to query.")
-    race: Optional[str] = Field(None, description="The race of the beast to query. Allows partial matches.")
     gender: Optional[str] = Field(None, description="The gender of the beast to query. Allows partial matches.")
     location: Optional[str] = Field(None, description="The location of the beast to query. Allows partial matches.")
 
@@ -413,7 +413,7 @@ class GameWorldKnowledgeGraph:
         self.knowledge_graph = KnowledgeGraph()
         self.entity_counters = {
             EntityType.CHARACTER: 0,
-            EntityType.BEAST: 0,
+            EntityType.CREATURE: 0,
             EntityType.LOCATION: 0,
             EntityType.ITEM: 0,
             EntityType.QUEST: 0,
@@ -425,11 +425,11 @@ class GameWorldKnowledgeGraph:
         self.entity_counters[entity_type] += 1
         return f"{entity_type.value}-{self.entity_counters[entity_type]}"
 
-    def add_entity(self, game_entity: Union[Character, Beast, Location, Item, Quest, Event, Faction]):
+    def add_entity(self, game_entity: Union[Race, Character, Creature, Location, Item, Quest, Event, Faction]):
         """
         Adds a game entity to the game world knowledge graph. Returns the entity id of the entity added.
         Args:
-            game_entity(Union[Character, Beast, Location, Item, Quest, Event, Faction]): The entity to add.
+            game_entity(Union[Race, Character, Creature, Location, Item, Quest, Event, Faction]): The entity to add.
         Returns:
             (str) The entity id of the entity added.
         """
@@ -437,28 +437,26 @@ class GameWorldKnowledgeGraph:
         self.knowledge_graph.add_entity(entity_id, game_entity.model_dump(mode="json"))
         return entity_id
 
-    def query_entities(self, entity_query: Union[
-        CharacterQuery, BeastQuery, LocationQuery, ItemQuery, QuestQuery, EventQuery, FactionQuery]) -> str:
+    def query_entities(self, entity_query: Union[RaceQuery,
+        CharacterQuery, CreatureQuery, LocationQuery, ItemQuery, QuestQuery, EventQuery, FactionQuery]) -> str:
         """
         Query entities of the game world knowledge graph.
         Args:
-           entity_query(Union[CharacterQuery, BeastQuery, LocationQuery, ItemQuery, QuestQuery, EventQuery, FactionQuery]): The entity query to query.
+           entity_query(Union[RaceQuery, CharacterQuery, CreatureQuery, LocationQuery, ItemQuery, QuestQuery, EventQuery, FactionQuery]): The entity query to query.
         """
+        if isinstance(entity_query, RaceQuery):
+            return self.query_race(entity_query.name, entity_query.race_type, entity_query.description)
         if isinstance(entity_query, CharacterQuery):
             return self.query_characters(
-                character_type=entity_query.character_type,
                 name=entity_query.name,
                 age=entity_query.age,
-                race=entity_query.race,
                 gender=entity_query.gender,
                 location=entity_query.location
             )
-        elif isinstance(entity_query, BeastQuery):
+        elif isinstance(entity_query, CreatureQuery):
             return self.query_beasts(
-                beast_type=entity_query.beast_type,
                 name=entity_query.name,
                 age=entity_query.age,
-                race=entity_query.race,
                 gender=entity_query.gender,
                 location=entity_query.location
             )
@@ -504,15 +502,15 @@ class GameWorldKnowledgeGraph:
         self.knowledge_graph.add_entity(entity_id, character.model_dump(mode="json"))
         return f"Character '{character.name}' added successfully with ID: {entity_id}"
 
-    def add_beast(self, beast: Beast):
+    def add_creature(self, creature: Creature):
         """
-        Adds a beast to the game world knowledge graph. Returns the entity id of the beast added.
+        Adds a creature to the game world knowledge graph. Returns the entity id of the creature added.
         Args:
-            beast(Beast): The beast to add.
+            creature(Creature): The beast to add.
         """
-        entity_id = self.generate_entity_id(EntityType.BEAST)
-        self.knowledge_graph.add_entity(entity_id, beast.model_dump(mode="json"))
-        return f"Beast '{beast.name}' added successfully with ID: {entity_id}"
+        entity_id = self.generate_entity_id(EntityType.CREATURE)
+        self.knowledge_graph.add_entity(entity_id, creature.model_dump(mode="json"))
+        return f"Beast '{creature.name}' added successfully with ID: {entity_id}"
 
     def add_location(self, location: Location):
         """
@@ -571,17 +569,43 @@ class GameWorldKnowledgeGraph:
             relationship(Relationship): The relationship to add.
         """
         self.knowledge_graph.add_relationship(relationship.first_entity_id, relationship.second_entity_id,
-                                              relationship.relationship_type.value,
+                                              relationship.relationship_type,
                                               {"description": relationship.description})
-        return f"Relationship '{relationship.relationship_type.value}' added successfully between entities {relationship.first_entity_id} and {relationship.second_entity_id}"
+        return f"Relationship '{relationship.relationship_type}' added successfully between entities {relationship.first_entity_id} and {relationship.second_entity_id}"
 
-    def query_characters(self, character_type: Optional[CharacterType] = None, name: Optional[str] = None,
+    def query_race(self, name: Optional[str] = None, race_type: Optional[RaceType] = None, description: Optional[str] = None):
+        """
+        Queries the races stored in the game world knowledge graph.
+        Args:
+            name(Optional[str]): The name of the race to query. Allows partial matches.
+            race_type(Optional[RaceType]): The type of the race to query.
+            description(Optional[str]): The description of the race to query. Allows partial matches.
+        """
+
+        def filter_func(node, data):
+            if data['entity_type'] != EntityType.CHARACTER.value:
+                return False
+            if name and name.lower() not in data['name'].lower():
+                return False
+            if description and description.lower() not in data['description'].lower():
+                return False
+            if race_type and race_type.lower() not in data['race_type'].lower():
+                return False
+            return True
+
+        results = [node for node, data in self.knowledge_graph.graph.nodes(data=True) if filter_func(node, data)]
+        if not results:
+            return "No characters found matching the given criteria."
+        return "\n".join(
+            [f"Race ID: {node}, Name: {self.knowledge_graph.graph.nodes[node]['name']}" for node in
+             results])
+
+    def query_characters(self, name: Optional[str] = None,
                          age: Optional[int] = None, race: Optional[str] = None,
                          gender: Optional[str] = None, location: Optional[str] = None):
         """
         Queries the characters stored in the game world knowledge graph.
         Args:
-            character_type(Optional[CharacterType]): The type of character to query.
             name(Optional[str]): The name of the character to query. Allows partial matches.
             age(Optional[int]): The age of the character to query.
             race(Optional[str]): The race of the character to query. Allows partial matches.
@@ -591,8 +615,6 @@ class GameWorldKnowledgeGraph:
 
         def filter_func(node, data):
             if data['entity_type'] != EntityType.CHARACTER.value:
-                return False
-            if character_type and data['character_type'] != character_type.value:
                 return False
             if name and name.lower() not in data['name'].lower():
                 return False
@@ -620,14 +642,13 @@ class GameWorldKnowledgeGraph:
             [f"Character ID: {node}, Name: {self.knowledge_graph.graph.nodes[node]['name']}" for node in
              results])
 
-    def query_beasts(self, beast_type: Optional[BeastType] = None, name: Optional[str] = None,
+    def query_beasts(self, name: Optional[str] = None,
                      age: Optional[int] = None,
                      race: Optional[str] = None,
                      gender: Optional[str] = None, location: Optional[str] = None):
         """
         Queries the beasts stored in the game world knowledge graph.
         Args:
-            beast_type(Optional[BeastType]): The type of beast to query.
             name(Optional[str]): The name of the beast to query. Allows partial matches.
             age(Optional[int]): The age of the beast to query.
             race(Optional[str]): The race of the beast to query. Allows partial matches.
@@ -636,9 +657,7 @@ class GameWorldKnowledgeGraph:
         """
 
         def filter_func(node, data):
-            if data['entity_type'] != EntityType.BEAST.value:
-                return False
-            if beast_type and data['beast_type'] != beast_type.value:
+            if data['entity_type'] != EntityType.CREATURE.value:
                 return False
             if name and name.lower() not in data['name'].lower():
                 return False
@@ -813,19 +832,19 @@ class GameWorldKnowledgeGraph:
         return "\n".join(
             [f"Faction ID: {node}, Name: {self.knowledge_graph.graph.nodes[node]['name']}" for node in results])
 
-    def query_relationships(self, entity_id: str, relationship_type: Optional[RelationshipType] = None):
+    def query_relationships(self, entity_id: str, relationship_type: Optional[str] = None):
         """
         Queries the relationships of a specific entity.
 
         Args:
             entity_id (str): The ID of the entity to query relationships for.
-            relationship_type (Optional[RelationshipType]): The type of relationship to filter by.
+            relationship_type (Optional[str]): The type of relationship to filter by.
 
         Returns:
             str: A string describing the relationships found.
         """
         relationships = self.knowledge_graph.query_relationships(entity_id,
-                                                                 relationship_type.value if relationship_type else None)
+                                                                 relationship_type if relationship_type else None)
         if not relationships:
             return f"No relationships found for entity {entity_id}"
 
@@ -927,7 +946,7 @@ class GameWorldKnowledgeGraph:
         return result
 
     def get_single_tools(self):
-        return [FunctionTool(self.add_character), FunctionTool(self.add_beast), FunctionTool(self.add_location),
+        return [FunctionTool(self.add_character), FunctionTool(self.add_creature), FunctionTool(self.add_location),
                 FunctionTool(self.add_item), FunctionTool(self.add_quest), FunctionTool(self.add_event),
                 FunctionTool(self.add_faction), FunctionTool(self.add_relationship),
                 FunctionTool(self.query_characters),

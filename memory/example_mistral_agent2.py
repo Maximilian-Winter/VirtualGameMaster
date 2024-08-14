@@ -13,21 +13,14 @@ from VirtualGameMaster.message_template import MessageTemplate
 from code_executer import PythonCodeExecutor, system_message_code_agent, run_code_agent
 
 provider = LlamaCppServerProvider("http://127.0.0.1:8080/")
-
-class MistralAltAgent(HostedToolAgent):
-    def __init__(self, provider: HostedLLMProvider, tokenizer_file: str = "NousResearch/Hermes-2-Pro-Llama-3-8B", debug_output: bool = False):
-        super().__init__(provider, HuggingFaceTokenizer(tokenizer_file), MistralToolCallHandler(debug_output),
-                         debug_output)
-
-agent = MistralAgent(provider=provider, debug_output=True)
+agent = MistralAltAgent(provider=provider, debug_output=True)
 
 settings = provider.get_default_settings()
 settings.neutralize_all_samplers()
-settings.temperature = 0.1
+settings.temperature = 0.3
 
-
-settings.set_stop_tokens(["</s>"], None)
-settings.set_max_new_tokens(4096)
+settings.set_stop_tokens(["</s>", "<|im_end|>"], None)
+settings.max(4096)
 
 game_state = GameState("../game_starters/rpg_candlekeep.yaml")
 game_world = GameWorldKnowledgeGraph()
@@ -38,14 +31,6 @@ system_prompt_template = f"""# Instructions
 Your task is to act as a Game Master (GM) for a text-based role-playing game. Your primary goal is to create an engaging, immersive, and dynamic role-playing experience for the player. You will narrate the story, describe the world, control non-player characters (NPCs), and adjudicate rules based on the provided game state and the game world knowledge graph.
 
 You have access to a Python code interpreter that allows you to execute Python code to interact with the game world knowledge graph.
-
-## Using the Python Interpreter
-
-To use the Python code interpreter, write the code you want to execute in a markdown 'python_interpreter' code block. For example:
-
-```python_interpreter
-print('Hello, World!')
-```
 
 ## Core Responsibilities
 
@@ -108,6 +93,13 @@ To enhance your narration:
 - Be prepared to improvise and adapt to unexpected player actions while maintaining narrative consistency.
 - If the player attempts an action that seems out of character or inconsistent with their established abilities, seek confirmation: "That seems unusual for [character name]. Are you sure that's what you want to do?"
 
+## Using the Python Interpreter
+
+To use the Python code interpreter, write the code you want to execute in a markdown 'python_interpreter' code block. For example:
+
+```python_interpreter
+print('Hello, World!')
+```
 
 ## Response Format
 
@@ -301,7 +293,10 @@ chat_history = ChatHistory()
 chat_history.add_system_message(system_message_template.generate_message_content(game_state.template_fields))
 
 python_code_executor = PythonCodeExecutor(
-    tools=tools, predefined_classes=[Relationship, RelationshipType, CharacterType, Character, CharacterQuery, BeastType, Beast, BeastQuery, LocationType, Location, LocationQuery, ItemType, Item, ItemQuery, FactionType, Faction, FactionQuery, QuestType, Quest, QuestQuery, EventType, Event, EventQuery])
+    tools=tools,
+    predefined_classes=[Relationship, RelationshipType, CharacterType, Character, CharacterQuery, BeastType, Beast,
+                        BeastQuery, LocationType, Location, LocationQuery, ItemType, Item, ItemQuery, FactionType,
+                        Faction, FactionQuery, QuestType, Quest, QuestQuery, EventType, Event, EventQuery])
 
 prompt = "Add the current game state to the knowledge graph with all details."
 
