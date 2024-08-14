@@ -132,8 +132,7 @@ class KnowledgeGraph:
         return kg
 
 
-class EntityType(str, Enum):
-    RACE = "Race"
+class GameEntityType(str, Enum):
     CHARACTER = "Character"
     CREATURE = "Creature"
     LOCATION = "Location"
@@ -143,289 +142,34 @@ class EntityType(str, Enum):
     FACTION = "Faction"
 
 
-class RaceType(str, Enum):
-    ANIMAL = "Animal"
-    MONSTER = "Monster"
-    NON_MONSTER = "Non-Monster"
-    DEITY = "Deity"
-    HUMANOID = "Humanoid"
-    MYTHICAL = "Mythical"
-    UNDEAD = "Undead"
-    CONSTRUCT = "Construct"
-    ELEMENTAL = "Elemental"
-
-
-class LocationType(str, Enum):
-    PLANE = "Plane"
-    CITY = "City"
-    CITY_DISTRICT = "City-District"
-    TOWN = "Town"
-    VILLAGE = "Village"
-    DUNGEON = "Dungeon"
-    WILDERNESS = "Wilderness"
-    TEMPLE = "Temple"
-    CASTLE = "Castle"
-    TAVERN = "Tavern"
-    INN = "Inn"
-    SHOP = "Shop"
-    HOUSE = "House"
-
-
-class ItemType(str, Enum):
-    WEAPON = "Weapon"
-    ARMOR = "Armor"
-    POTION = "Potion"
-    EQUIPMENT = "Equipment"
-    SCROLL = "Scroll"
-    WAND = "Wand"
-    RING = "Ring"
-    ARTIFACT = "Artifact"
-    MISC = "Miscellaneous"
-
-
-class QuestType(str, Enum):
-    FIND_CHARACTER = "Find Character"
-    FIND_ITEM = "Find Item"
-    KILL_MONSTER = "Kill Monster"
-    KILL_CHARACTER = "Kill Character"
-    ESCORT = "Escort"
-    EXPLORE = "Explore"
-    RESCUE = "Rescue"
-    DELIVER = "Deliver"
-
-
-class EventType(str, Enum):
-    HISTORY = "History"
-    LORE = "Lore"
-    FESTIVAL = "Festival"
-    MURDER = "Murder"
-    BATTLE = "Battle"
-    NATURAL_DISASTER = "Natural Disaster"
-    RITUAL = "Ritual"
-
-
-class FactionType(str, Enum):
-    CORPORATION = "Corporation"
-    GUILD = "Guild"
-    GROUP = "Group"
-    GOVERNMENT = "Government"
-    CULT = "Cult"
-    TRIBE = "Tribe"
-
-
-class RelationshipType(str, Enum):
-    # Character relationships
-    ALLY = "Ally"
-    ENEMY = "Enemy"
-    FRIEND = "Friend"
-    FAMILY = "Family"
-    MENTOR = "Mentor"
-    STUDENT = "Student"
-    RIVAL = "Rival"
-    LOVER = "Lover"
-    SPOUSE = "Spouse"
-
-    # Location relationships
-    RESIDES_IN = "Resides In"
-    RULES = "Rules"
-    OWNS = "Owns"
-    GUARDS = "Guards"
-    LOCATED_IN = "Located In"
-
-    # Item relationships
-    POSSESSES = "Possesses"
-    CREATED = "Created"
-    SEEKS = "Seeks"
-
-    # Quest relationships
-    ASSIGNED_BY = "Assigned By"
-    INVOLVES = "Involves"
-    REWARDS = "Rewards"
-
-    # Event relationships
-    PARTICIPATED_IN = "Participated In"
-    CAUSED = "Caused"
-    AFFECTED_BY = "Affected By"
-
-    # Faction relationships
-    MEMBER_OF = "Member Of"
-    ALLIED_WITH = "Allied With"
-    AT_WAR_WITH = "At War With"
-    TRADING_PARTNER = "Trading Partner"
-
-    # Beast relationships
-    TAMED_BY = "Tamed By"
-    HUNTS = "Hunts"
-    INHABITS = "Inhabits"
-
-    # General relationships
-    KNOWS_ABOUT = "Knows About"
-    INTERACTS_WITH = "Interacts With"
-    PROTECTS = "Protects"
-    THREATENS = "Threatens"
-    WORSHIPS = "Worships"
-
-
 class GameEntity(BaseModel):
-    entity_type: EntityType
+    entity_type: GameEntityType = Field(..., description="The type of entity")
+    entity_data: Dict[str, Any] = Field(..., description="The entity data")
 
 
-class Race(GameEntity):
-    entity_type: EntityType = EntityType.RACE
-    race_type: RaceType = Field(..., description="Type of the race.")
-    name: str = Field(..., description="Name of the race.")
-    description: str = Field(..., description="Description of the race.")
-
-
-class Character(GameEntity):
-    """
-    Represents a Character.
-    """
-    entity_type: EntityType = EntityType.CHARACTER
-    name: str = Field(..., description="The name of the character.")
-    age: Optional[int] = Field(..., description="The age of the character.")
-    gender: Optional[str] = Field(..., description="The gender of the character.")
-    description: str = Field(..., description="The description of the character.")
-
-
-class Creature(GameEntity):
-    """
-    Represents a Creature.
-    """
-    entity_type: EntityType = EntityType.CREATURE
-    name: str = Field(..., description="The name of the beast.")
-    age: Optional[int] = Field(..., description="The age of the beast.")
-    gender: Optional[str] = Field(..., description="The gender of the beast.")
-    description: str = Field(..., description="The description of the beast.")
-
-
-class Location(GameEntity):
-    """
-    Represents a Location.
-    """
-    entity_type: EntityType = EntityType.LOCATION
-    name: str = Field(..., description="The name of the location.")
-    location_type: LocationType = Field(..., description="The type of the location.")
-    description: str = Field(..., description="The description of the location.")
-
-
-class Item(GameEntity):
-    """
-    Represents an Item.
-    """
-    entity_type: EntityType = EntityType.ITEM
-    name: str = Field(..., description="The name of the item.")
-    item_type: ItemType = Field(..., description="The type of item.")
-    description: str = Field(..., description="The description of the item.")
-
-
-class Quest(GameEntity):
-    """
-    Represents a Quest.
-    """
-    entity_type: EntityType = EntityType.QUEST
-    name: str = Field(..., description="The name of the quest.")
-    quest_type: QuestType = Field(..., description="The type of quest.")
-    description: str = Field(..., description="The description of the quest.")
-
-
-class Event(GameEntity):
-    """
-    Represents an Event.
-    """
-    entity_type: EntityType = EntityType.EVENT
-    name: str = Field(..., description="The name of the event.")
-    event_type: EventType = Field(..., description="The type of event.")
-    description: str = Field(..., description="The description of the event.")
-
-
-class Faction(GameEntity):
-    """
-    Represents a Faction.
-    """
-    entity_type: EntityType = EntityType.FACTION
-    name: str = Field(..., description="The name of the faction.")
-    faction_type: FactionType = Field(..., description="The type of faction.")
-    description: str = Field(..., description="The description of the faction.")
-
-
-class Relationship(BaseModel):
-    """
-    Represents a Relationship.
-    """
-    first_entity_id: str = Field(..., description="The entity id of the first entity.")
-    relationship_type: str = Field(..., description="The type of relationship.")
-    second_entity_id: str = Field(..., description="The entity id of the second entity.")
-    description: str = Field(..., description="The description of the relationship.")
-
-
-class RaceQuery(BaseModel):
-    race_type: Optional[RaceType] = Field(..., description="The type of race.")
-    name: Optional[str] = Field(..., description="The name of the race. Allows partial matches.")
-    description: Optional[str] = Field(..., description="The description of the race. Allows partial matches.")
-
-
-class CharacterQuery(BaseModel):
-    name: Optional[str] = Field(None, description="The name of the character to query. Allows partial matches.")
-    age: Optional[int] = Field(None, description="The age of the character to query.")
-    gender: Optional[str] = Field(None, description="The gender of the character to query. Allows partial matches.")
-    location: Optional[str] = Field(None, description="The location of the character to query. Allows partial matches.")
-
-
-class CreatureQuery(BaseModel):
-    name: Optional[str] = Field(None, description="The name of the beast to query. Allows partial matches.")
-    age: Optional[int] = Field(None, description="The age of the beast to query.")
-    gender: Optional[str] = Field(None, description="The gender of the beast to query. Allows partial matches.")
-    location: Optional[str] = Field(None, description="The location of the beast to query. Allows partial matches.")
-
-
-class LocationQuery(BaseModel):
-    location_type: Optional[LocationType] = Field(None, description="The type of location to query.")
-    name: Optional[str] = Field(None, description="The name of the location to query. Allows partial matches.")
-
-
-class ItemQuery(BaseModel):
-    item_type: Optional[ItemType] = Field(None, description="The type of item to query.")
-    name: Optional[str] = Field(None, description="The name of the item to query. Allows partial matches.")
-    location: Optional[str] = Field(None, description="The location of the item to query. Allows partial matches.")
-
-
-class QuestQuery(BaseModel):
-    quest_type: Optional[QuestType] = Field(None, description="The type of quest to query.")
-    name: Optional[str] = Field(None, description="The name of the quest to query. Allows partial matches.")
-    location: Optional[str] = Field(None, description="The location of the quest to query. Allows partial matches.")
-
-
-class EventQuery(BaseModel):
-    event_type: Optional[EventType] = Field(None, description="The type of event to query.")
-    name: Optional[str] = Field(None, description="The name of the event to query. Allows partial matches.")
-    location: Optional[str] = Field(None, description="The location of the event to query. Allows partial matches.")
-
-
-class FactionQuery(BaseModel):
-    faction_type: Optional[FactionType] = Field(None, description="The type of faction to query.")
-    name: Optional[str] = Field(None, description="The name of the faction to query. Allows partial matches.")
-    location: Optional[str] = Field(None, description="The location of the faction to query. Allows partial matches.")
+class GameEntityQuery(BaseModel):
+    entity_type: GameEntityType = Field(..., description="The type of entity to query")
+    entity_data_filter: Optional[Dict[str, Any]] = Field(None, description="The entity data filter")
 
 
 class GameWorldKnowledgeGraph:
     def __init__(self):
         self.knowledge_graph = KnowledgeGraph()
         self.entity_counters = {
-            EntityType.CHARACTER: 0,
-            EntityType.CREATURE: 0,
-            EntityType.LOCATION: 0,
-            EntityType.ITEM: 0,
-            EntityType.QUEST: 0,
-            EntityType.EVENT: 0,
-            EntityType.FACTION: 0
+            GameEntityType.CHARACTER: 0,
+            GameEntityType.CREATURE: 0,
+            GameEntityType.LOCATION: 0,
+            GameEntityType.ITEM: 0,
+            GameEntityType.QUEST: 0,
+            GameEntityType.EVENT: 0,
+            GameEntityType.FACTION: 0
         }
 
-    def generate_entity_id(self, entity_type: EntityType) -> str:
+    def generate_entity_id(self, entity_type: GameEntityType) -> str:
         self.entity_counters[entity_type] += 1
         return f"{entity_type.value}-{self.entity_counters[entity_type]}"
 
-    def add_entity(self, game_entity: Union[Race, Character, Creature, Location, Item, Quest, Event, Faction]):
+    def add_entity(self, game_entity: GameEntity):
         """
         Adds a game entity to the game world knowledge graph. Returns the entity id of the entity added.
         Args:
@@ -437,425 +181,73 @@ class GameWorldKnowledgeGraph:
         self.knowledge_graph.add_entity(entity_id, game_entity.model_dump(mode="json"))
         return entity_id
 
-    def query_entities(self, entity_query: Union[RaceQuery,
-        CharacterQuery, CreatureQuery, LocationQuery, ItemQuery, QuestQuery, EventQuery, FactionQuery]) -> str:
+    def query_entities(self, entity_query: GameEntityQuery) -> str:
         """
         Query entities of the game world knowledge graph.
         Args:
-           entity_query(Union[RaceQuery, CharacterQuery, CreatureQuery, LocationQuery, ItemQuery, QuestQuery, EventQuery, FactionQuery]): The entity query to query.
+           entity_query (GameEntityQuery): The entity query.
+        Returns:
+           str: A formatted string containing the query results.
         """
-        if isinstance(entity_query, RaceQuery):
-            return self.query_race(entity_query.name, entity_query.race_type, entity_query.description)
-        if isinstance(entity_query, CharacterQuery):
-            return self.query_characters(
-                name=entity_query.name,
-                age=entity_query.age,
-                gender=entity_query.gender,
-                location=entity_query.location
-            )
-        elif isinstance(entity_query, CreatureQuery):
-            return self.query_beasts(
-                name=entity_query.name,
-                age=entity_query.age,
-                gender=entity_query.gender,
-                location=entity_query.location
-            )
-        elif isinstance(entity_query, LocationQuery):
-            return self.query_locations(
-                location_type=entity_query.location_type,
-                name=entity_query.name
-            )
-        elif isinstance(entity_query, ItemQuery):
-            return self.query_items(
-                item_type=entity_query.item_type,
-                name=entity_query.name,
-                location=entity_query.location
-            )
-        elif isinstance(entity_query, QuestQuery):
-            return self.query_quests(
-                quest_type=entity_query.quest_type,
-                name=entity_query.name,
-                location=entity_query.location
-            )
-        elif isinstance(entity_query, EventQuery):
-            return self.query_events(
-                event_type=entity_query.event_type,
-                name=entity_query.name,
-                location=entity_query.location
-            )
-        elif isinstance(entity_query, FactionQuery):
-            return self.query_factions(
-                faction_type=entity_query.faction_type,
-                name=entity_query.name,
-                location=entity_query.location
-            )
-        else:
-            return "Invalid query type provided."
+        # First, filter entities by type
+        matching_entities: List[Dict[str, Any]] = []
+        for node, data in self.knowledge_graph.graph.nodes(data=True):
+            if data.get('entity_type') == entity_query.entity_type.value:
+                matching_entities.append({'id': node, **data})
 
-    def add_character(self, character: Character):
-        """
-        Adds a character to the game world knowledge graph. Returns the entity id of the character added.
-        Args:
-            character(Character): The character to add.
-        """
-        entity_id = self.generate_entity_id(EntityType.CHARACTER)
-        self.knowledge_graph.add_entity(entity_id, character.model_dump(mode="json"))
-        return f"Character '{character.name}' added successfully with ID: {entity_id}"
+        # Then, apply the entity_data_filter if provided
+        if entity_query.entity_data_filter:
+            matching_entities = [
+                entity for entity in matching_entities
+                if all(
+                    entity['entity_data'].get(k) == v
+                    for k, v in entity_query.entity_data_filter.items()
+                )
+            ]
 
-    def add_creature(self, creature: Creature):
-        """
-        Adds a creature to the game world knowledge graph. Returns the entity id of the creature added.
-        Args:
-            creature(Creature): The beast to add.
-        """
-        entity_id = self.generate_entity_id(EntityType.CREATURE)
-        self.knowledge_graph.add_entity(entity_id, creature.model_dump(mode="json"))
-        return f"Beast '{creature.name}' added successfully with ID: {entity_id}"
+        # Format the results
+        if not matching_entities:
+            return f"No entities found matching the query for type: {entity_query.entity_type.value}"
 
-    def add_location(self, location: Location):
-        """
-        Adds a location to the game world knowledge graph. Returns the entity id of the location added.
-        Args:
-            location(Location): The location to add.
-        """
-        entity_id = self.generate_entity_id(EntityType.LOCATION)
-        self.knowledge_graph.add_entity(entity_id, location.model_dump(mode="json"))
-        return f"Location '{location.name}' added successfully with ID: {entity_id}"
+        result = f"Entities of type {entity_query.entity_type.value}:\n"
+        for entity in matching_entities:
+            result += f"- ID: {entity['id']}\n"
+            result += f"  Name: {entity['entity_data'].get('name', 'Unnamed')}\n"
+            for key, value in entity['entity_data'].items():
+                if key != 'name':
+                    result += f"  {key}: {value}\n"
+            result += "\n"
 
-    def add_item(self, item: Item):
-        """
-        Adds an item to the game world knowledge graph. Returns the entity id of the item added.
-        Args:
-            item(Item): The item to add.
-        """
-        entity_id = self.generate_entity_id(EntityType.ITEM)
-        self.knowledge_graph.add_entity(entity_id, item.model_dump(mode="json"))
-        return f"Item '{item.name}' added successfully with ID: {entity_id}"
+        return result
 
-    def add_quest(self, quest: Quest):
-        """
-        Adds a quest to the game world knowledge graph. Returns the entity id of the quest added.
-        Args:
-            quest(Quest): The quest to add.
-        """
-        entity_id = self.generate_entity_id(EntityType.QUEST)
-        self.knowledge_graph.add_entity(entity_id, quest.model_dump(mode="json"))
-        return f"Quest '{quest.name}' added successfully with ID: {entity_id}"
-
-    def add_event(self, event: Event):
-        """
-        Adds an event to the game world knowledge graph. Returns the entity id of the event added.
-        Args:
-            event(Event): The event to add.
-        """
-        entity_id = self.generate_entity_id(EntityType.EVENT)
-        self.knowledge_graph.add_entity(entity_id, event.model_dump(mode="json"))
-        return f"Event '{event.name}' added successfully with ID: {entity_id}"
-
-    def add_faction(self, faction: Faction):
-        """
-        Adds a faction to the game world knowledge graph. Returns the entity id of the faction added.
-        Args:
-            faction(Faction): The faction to add.
-        """
-        entity_id = self.generate_entity_id(EntityType.FACTION)
-        self.knowledge_graph.add_entity(entity_id, faction.model_dump(mode="json"))
-        return f"Faction '{faction.name}' added successfully with ID: {entity_id}"
-
-    def add_relationship(self, relationship: Relationship):
+    def add_relationship(self, first_game_entity_id: str, relationship_type: str, second_game_entity_id: str,
+                         description: Optional[str] = None):
         """
         Adds a relationship between two entities to the game world knowledge graph.
         Args:
-            relationship(Relationship): The relationship to add.
+            first_game_entity_id(str): The first game entity id.
+            relationship_type(str): The relationship type.
+            second_game_entity_id(str): The second game entity id.
+            description(Optional[str]): The description of the relationship type.
         """
-        self.knowledge_graph.add_relationship(relationship.first_entity_id, relationship.second_entity_id,
-                                              relationship.relationship_type,
-                                              {"description": relationship.description})
-        return f"Relationship '{relationship.relationship_type}' added successfully between entities {relationship.first_entity_id} and {relationship.second_entity_id}"
+        self.knowledge_graph.add_relationship(first_game_entity_id, second_game_entity_id,
+                                              relationship_type,
+                                              {"description": description} if description else {})
+        return f"Relationship 'relationship_type' added successfully between entities {first_game_entity_id} and {second_game_entity_id}"
 
-    def query_race(self, name: Optional[str] = None, race_type: Optional[RaceType] = None, description: Optional[str] = None):
+    def query_relationships(self, game_entity_id: str, relationship_type: Optional[str]):
         """
-        Queries the races stored in the game world knowledge graph.
+        Query relationships of an entity of the game world knowledge graph.
         Args:
-            name(Optional[str]): The name of the race to query. Allows partial matches.
-            race_type(Optional[RaceType]): The type of the race to query.
-            description(Optional[str]): The description of the race to query. Allows partial matches.
+            game_entity_id(str): The game entity id.
+            relationship_type(Optional[str]): The relationship type.
         """
-
-        def filter_func(node, data):
-            if data['entity_type'] != EntityType.CHARACTER.value:
-                return False
-            if name and name.lower() not in data['name'].lower():
-                return False
-            if description and description.lower() not in data['description'].lower():
-                return False
-            if race_type and race_type.lower() not in data['race_type'].lower():
-                return False
-            return True
-
-        results = [node for node, data in self.knowledge_graph.graph.nodes(data=True) if filter_func(node, data)]
-        if not results:
-            return "No characters found matching the given criteria."
-        return "\n".join(
-            [f"Race ID: {node}, Name: {self.knowledge_graph.graph.nodes[node]['name']}" for node in
-             results])
-
-    def query_characters(self, name: Optional[str] = None,
-                         age: Optional[int] = None, race: Optional[str] = None,
-                         gender: Optional[str] = None, location: Optional[str] = None):
-        """
-        Queries the characters stored in the game world knowledge graph.
-        Args:
-            name(Optional[str]): The name of the character to query. Allows partial matches.
-            age(Optional[int]): The age of the character to query.
-            race(Optional[str]): The race of the character to query. Allows partial matches.
-            gender(Optional[str]): The gender of the character to query. Allows partial matches.
-            location(Optional[str]): The location of the character to query. Allows partial matches.
-        """
-
-        def filter_func(node, data):
-            if data['entity_type'] != EntityType.CHARACTER.value:
-                return False
-            if name and name.lower() not in data['name'].lower():
-                return False
-            if age is not None and data['age'] != age:
-                return False
-            if race and race.lower() not in data['race'].lower():
-                return False
-            if gender and gender.lower() not in data['gender'].lower():
-                return False
-            if location:
-                # Check if character is related to the given location
-                for _, target, edge_data in self.knowledge_graph.graph.edges(node, data=True):
-                    if ((edge_data['relationship'] == RelationshipType.INHABITS.value or edge_data[
-                        'relationship'] == RelationshipType.LOCATED_IN.value or edge_data[
-                             'relationship'] == RelationshipType.RESIDES_IN.value) and
-                            location.lower() in self.knowledge_graph.graph.nodes[target]['name'].lower()):
-                        return True
-                return False
-            return True
-
-        results = [node for node, data in self.knowledge_graph.graph.nodes(data=True) if filter_func(node, data)]
-        if not results:
-            return "No characters found matching the given criteria."
-        return "\n".join(
-            [f"Character ID: {node}, Name: {self.knowledge_graph.graph.nodes[node]['name']}" for node in
-             results])
-
-    def query_beasts(self, name: Optional[str] = None,
-                     age: Optional[int] = None,
-                     race: Optional[str] = None,
-                     gender: Optional[str] = None, location: Optional[str] = None):
-        """
-        Queries the beasts stored in the game world knowledge graph.
-        Args:
-            name(Optional[str]): The name of the beast to query. Allows partial matches.
-            age(Optional[int]): The age of the beast to query.
-            race(Optional[str]): The race of the beast to query. Allows partial matches.
-            gender(Optional[str]): The gender of the beast to query. Allows partial matches.
-            location(Optional[str]): The location of the beast to query. Allows partial matches.
-        """
-
-        def filter_func(node, data):
-            if data['entity_type'] != EntityType.CREATURE.value:
-                return False
-            if name and name.lower() not in data['name'].lower():
-                return False
-            if age is not None and data['age'] != age:
-                return False
-            if race and race.lower() not in data['race'].lower():
-                return False
-            if gender and gender.lower() not in data['gender'].lower():
-                return False
-            if location:
-                # Check if beast is related to the given location
-                for _, target, edge_data in self.knowledge_graph.graph.edges(node, data=True):
-                    if ((edge_data['relationship'] == RelationshipType.INHABITS.value or edge_data[
-                        'relationship'] == RelationshipType.LOCATED_IN.value or edge_data[
-                             'relationship'] == RelationshipType.RESIDES_IN.value) and
-                            location.lower() in self.knowledge_graph.graph.nodes[target]['name'].lower()):
-                        return True
-                return False
-            return True
-
-        results = [node for node, data in self.knowledge_graph.graph.nodes(data=True) if filter_func(node, data)]
-        if not results:
-            return "No beasts found matching the given criteria."
-        return "\n".join(
-            [f"Beast ID: {node}, Name: {self.knowledge_graph.graph.nodes[node]['name']}" for node in results])
-
-    def query_locations(self, location_type: Optional[LocationType] = None, name: Optional[str] = None):
-        """
-        Queries the locations stored in the game world knowledge graph.
-        Args:
-            location_type(Optional[LocationType]): The type of location to query.
-            name(Optional[str]): The name of the location to query. Allows partial matches.
-        """
-
-        def filter_func(node, data):
-            if data['entity_type'] != EntityType.LOCATION.value:
-                return False
-            if location_type and data['location_type'] != location_type.value:
-                return False
-            if name and name.lower() not in data['name'].lower():
-                return False
-            return True
-
-        results = [node for node, data in self.knowledge_graph.graph.nodes(data=True) if filter_func(node, data)]
-        if not results:
-            return "No locations found matching the given criteria."
-        return "\n".join(
-            [f"Location ID: {node}, Name: {self.knowledge_graph.graph.nodes[node]['name']}" for node in
-             results])
-
-    def query_items(self, item_type: Optional[ItemType] = None, name: Optional[str] = None,
-                    location: Optional[str] = None):
-        """
-        Queries the items stored in the game world knowledge graph.
-        Args:
-            item_type(Optional[ItemType]): The type of item to query.
-            name(Optional[str]): The name of the item to query. Allows partial matches.
-            location(Optional[str]): The location of the item to query. Allows partial matches.
-        """
-
-        def filter_func(node, data):
-            if data['entity_type'] != EntityType.ITEM.value:
-                return False
-            if item_type and data['item_type'] != item_type.value:
-                return False
-            if name and name.lower() not in data['name'].lower():
-                return False
-            if location:
-                for _, target, edge_data in self.knowledge_graph.graph.edges(node, data=True):
-                    if (edge_data['relationship'] == RelationshipType.LOCATED_IN.value and
-                            location.lower() in self.knowledge_graph.graph.nodes[target]['name'].lower()):
-                        return True
-                return False
-            return True
-
-        results = [node for node, data in self.knowledge_graph.graph.nodes(data=True) if filter_func(node, data)]
-        if not results:
-            return "No items found matching the given criteria."
-        return "\n".join(
-            [f"Item ID: {node}, Name: {self.knowledge_graph.graph.nodes[node]['name']}" for node in results])
-
-    def query_quests(self, quest_type: Optional[QuestType] = None, name: Optional[str] = None,
-                     location: Optional[str] = None):
-        """
-        Queries the quests stored in the game world knowledge graph.
-        Args:
-            quest_type(Optional[QuestType]): The type of quest to query.
-            name(Optional[str]): The name of the quest to query. Allows partial matches.
-            location(Optional[str]): The location of the quest to query. Allows partial matches.
-        """
-
-        def filter_func(node, data):
-            if data['entity_type'] != EntityType.QUEST.value:
-                return False
-            if quest_type and data['quest_type'] != quest_type.value:
-                return False
-            if name and name.lower() not in data['name'].lower():
-                return False
-            if location:
-                for _, target, edge_data in self.knowledge_graph.graph.edges(node, data=True):
-                    if (edge_data['relationship'] == RelationshipType.LOCATED_IN.value and
-                            location.lower() in self.knowledge_graph.graph.nodes[target]['name'].lower()):
-                        return True
-                return False
-            return True
-
-        results = [node for node, data in self.knowledge_graph.graph.nodes(data=True) if filter_func(node, data)]
-        if not results:
-            return "No quests found matching the given criteria."
-        return "\n".join(
-            [f"Quest ID: {node}, Name: {self.knowledge_graph.graph.nodes[node]['name']}" for node in results])
-
-    def query_events(self, event_type: Optional[EventType] = None, name: Optional[str] = None,
-                     location: Optional[str] = None):
-        """
-        Queries the events stored in the game world knowledge graph.
-        Args:
-            event_type(Optional[EventType]): The type of event to query.
-            name(Optional[str]): The name of the event to query. Allows partial matches.
-            location(Optional[str]): The location of the event to query. Allows partial matches.
-        """
-
-        def filter_func(node, data):
-            if data['entity_type'] != EntityType.EVENT.value:
-                return False
-            if event_type and data['event_type'] != event_type.value:
-                return False
-            if name and name.lower() not in data['name'].lower():
-                return False
-            if location:
-                for _, target, edge_data in self.knowledge_graph.graph.edges(node, data=True):
-                    if (edge_data['relationship'] == RelationshipType.LOCATED_IN.value and
-                            location.lower() in self.knowledge_graph.graph.nodes[target]['name'].lower()):
-                        return True
-                return False
-            return True
-
-        results = [node for node, data in self.knowledge_graph.graph.nodes(data=True) if filter_func(node, data)]
-        if not results:
-            return "No events found matching the given criteria."
-        return "\n".join(
-            [f"Event ID: {node}, Name: {self.knowledge_graph.graph.nodes[node]['name']}" for node in results])
-
-    def query_factions(self, faction_type: Optional[FactionType] = None, name: Optional[str] = None,
-                       location: Optional[str] = None):
-        """
-        Queries the factions stored in the game world knowledge graph.
-        Args:
-            faction_type(Optional[FactionType]): The type of faction to query.
-            name(Optional[str]): The name of the faction to query. Allows partial matches.
-            location(Optional[str]): The location of the faction to query. Allows partial matches.
-        """
-
-        def filter_func(node, data):
-            if data['entity_type'] != EntityType.FACTION.value:
-                return False
-            if faction_type and data['faction_type'] != faction_type.value:
-                return False
-            if name and name.lower() not in data['name'].lower():
-                return False
-            if location:
-                for _, target, edge_data in self.knowledge_graph.graph.edges(node, data=True):
-                    if (edge_data['relationship'] == RelationshipType.LOCATED_IN.value and
-                            location.lower() in self.knowledge_graph.graph.nodes[target]['name'].lower()):
-                        return True
-                return False
-            return True
-
-        results = [node for node, data in self.knowledge_graph.graph.nodes(data=True) if filter_func(node, data)]
-        if not results:
-            return "No factions found matching the given criteria."
-        return "\n".join(
-            [f"Faction ID: {node}, Name: {self.knowledge_graph.graph.nodes[node]['name']}" for node in results])
-
-    def query_relationships(self, entity_id: str, relationship_type: Optional[str] = None):
-        """
-        Queries the relationships of a specific entity.
-
-        Args:
-            entity_id (str): The ID of the entity to query relationships for.
-            relationship_type (Optional[str]): The type of relationship to filter by.
-
-        Returns:
-            str: A string describing the relationships found.
-        """
-        relationships = self.knowledge_graph.query_relationships(entity_id,
-                                                                 relationship_type if relationship_type else None)
-        if not relationships:
-            return f"No relationships found for entity {entity_id}"
-
-        result = f"Relationships for entity {entity_id}:\n"
-        for rel in relationships:
-            result += f"- {rel['source']} '{rel['type']}' {rel["target"]} ({rel['attributes'].get('description', 'No description')})\n"
-        return result
+        results = self.knowledge_graph.query_relationships(game_entity_id, relationship_type)
+        return '\n'.join(json.dumps(results, indent=2))
 
     def find_path(self, start_entity_id: str, end_entity_id: str, max_depth: int = 5):
         """
-        Finds a path between two entities in the knowledge graph.
+        Finds a path between two game entities in the knowledge graph.
 
         Args:
             start_entity_id (str): The ID of the starting entity.
@@ -918,13 +310,14 @@ class GameWorldKnowledgeGraph:
             result += f"- {entity_id}: {entity_data.get('name', 'Unnamed entity')}\n"
         return result
 
-    def get_nearby_entities(self, location_id: str, entity_type: Optional[EntityType] = None, max_distance: int = 2):
+    def get_nearby_entities(self, location_id: str, game_entity_type: Optional[GameEntityType] = None,
+                            max_distance: int = 2):
         """
         Finds entities that are near a specified location in the knowledge graph.
 
         Args:
             location_id (str): The ID of the location to search from.
-            entity_type (Optional[EntityType]): The type of entity to filter by.
+            game_entity_type (Optional[GameEntityType]): The type of game entity to filter by.
             max_distance (int): The maximum distance (in graph edges) to search.
 
         Returns:
@@ -934,7 +327,8 @@ class GameWorldKnowledgeGraph:
         nearby_entities = []
 
         for node in subgraph['nodes']:
-            if node["id"] != location_id and (entity_type is None or node['entity_type'] == entity_type.value):
+            if node["id"] != location_id and (
+                    game_entity_type is None or node['game_entity_type'] == game_entity_type.value):
                 nearby_entities.append((node["id"], node))
 
         if not nearby_entities:
@@ -944,16 +338,6 @@ class GameWorldKnowledgeGraph:
         for entity_id, entity_data in nearby_entities:
             result += f"- {entity_id}: {entity_data.get('name', 'Unnamed entity')} ({entity_data['entity_type']})\n"
         return result
-
-    def get_single_tools(self):
-        return [FunctionTool(self.add_character), FunctionTool(self.add_creature), FunctionTool(self.add_location),
-                FunctionTool(self.add_item), FunctionTool(self.add_quest), FunctionTool(self.add_event),
-                FunctionTool(self.add_faction), FunctionTool(self.add_relationship),
-                FunctionTool(self.query_characters),
-                FunctionTool(self.query_beasts), FunctionTool(self.query_locations), FunctionTool(self.query_items),
-                FunctionTool(self.query_quests), FunctionTool(self.query_events), FunctionTool(self.query_factions),
-                FunctionTool(self.query_relationships), FunctionTool(self.query_entities_by_attribute),
-                FunctionTool(self.get_entity_details), FunctionTool(self.get_nearby_entities)]
 
     def get_unified_tools(self):
         return [FunctionTool(self.add_entity), FunctionTool(self.add_relationship), FunctionTool(self.query_entities),

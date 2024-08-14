@@ -5,14 +5,20 @@ from ToolAgents.interfaces.llm_tokenizer import HuggingFaceTokenizer
 from ToolAgents.provider import LlamaCppServerProvider
 from ToolAgents.utilities import ChatHistory
 from VirtualGameMaster.game_state import GameState
-from VirtualGameMaster.memory.game_world_knowledge_graph import GameWorldKnowledgeGraph, CharacterType, Character, \
-    CharacterQuery, BeastType, Beast, BeastQuery, LocationType, Location, LocationQuery, ItemType, Item, ItemQuery, \
-    FactionType, Faction, FactionQuery, QuestType, Quest, QuestQuery, EventType, Event, EventQuery, Relationship, \
-    RelationshipType
+from VirtualGameMaster.memory.game_world_knowledge_graph import GameWorldKnowledgeGraph, GameEntity, GameEntityQuery, GameEntityType
 from VirtualGameMaster.message_template import MessageTemplate
 from code_executer import PythonCodeExecutor, system_message_code_agent, run_code_agent
 
 provider = LlamaCppServerProvider("http://127.0.0.1:8080/")
+
+
+class MistralAltAgent(HostedToolAgent):
+    def __init__(self, provider: HostedLLMProvider, tokenizer_file: str = "NousResearch/Hermes-2-Pro-Llama-3-8B",
+                 debug_output: bool = False):
+        super().__init__(provider, HuggingFaceTokenizer(tokenizer_file), MistralToolCallHandler(debug_output),
+                         debug_output)
+
+
 agent = MistralAltAgent(provider=provider, debug_output=True)
 
 settings = provider.get_default_settings()
@@ -20,7 +26,7 @@ settings.neutralize_all_samplers()
 settings.temperature = 0.3
 
 settings.set_stop_tokens(["</s>", "<|im_end|>"], None)
-settings.max(4096)
+settings.set_max_new_tokens(4096)
 
 game_state = GameState("../game_starters/rpg_candlekeep.yaml")
 game_world = GameWorldKnowledgeGraph()
@@ -226,9 +232,6 @@ When using the information from the game state sections and the Game Knowledge G
 ### Setting
 {{setting}}
 
-### Game World
-{{game_world_information}}
-
 ### Time and Calendar
 {{time_and_calendar}}
 
@@ -294,13 +297,13 @@ chat_history.add_system_message(system_message_template.generate_message_content
 
 python_code_executor = PythonCodeExecutor(
     tools=tools,
-    predefined_classes=[Relationship, RelationshipType, CharacterType, Character, CharacterQuery, BeastType, Beast,
-                        BeastQuery, LocationType, Location, LocationQuery, ItemType, Item, ItemQuery, FactionType,
-                        Faction, FactionQuery, QuestType, Quest, QuestQuery, EventType, Event, EventQuery])
+    predefined_classes=[GameEntity, GameEntityQuery, GameEntityType])
 
-prompt = "Add the current game state to the knowledge graph with all details."
+prompt = "Add the below information to the knowledge graph with all details.\n\n### Game World\n\n{game_world_information}"
 
-run_code_agent(agent=agent, settings=settings, chat_history=chat_history, user_input=prompt,
+prompt_template = MessageTemplate.from_string(prompt)
+
+run_code_agent(agent=agent, settings=settings, chat_history=chat_history, user_input=prompt_template.generate_message_content(game_state.template_fields),
                python_code_executor=python_code_executor)
 
 game_world.save("game_world.json")

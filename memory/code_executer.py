@@ -11,7 +11,7 @@ from ToolAgents.utilities import ChatHistory
 
 class PythonCodeExecutor:
     def __init__(self, tools: List[FunctionTool] = None, predefined_classes: list = None):
-        self.code_pattern = re.compile(r'```python_interpreter\n(.*?)```', re.DOTALL)
+        self.code_pattern = re.compile(r'```python\n(.*?)```', re.DOTALL)
         self.global_context = {}
         self.predefined_functions = {}
         self.predefined_classes = {}
