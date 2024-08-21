@@ -6,13 +6,14 @@ from groq import Groq
 
 from openai import OpenAI
 
+from ToolAgents import FunctionTool
 from llama_cpp_agent.chat_history.messages import Roles
 from llama_cpp_agent.llm_output_settings import LlmStructuredOutputSettings, LlmStructuredOutputType
 from llama_cpp_agent.providers import LlamaCppServerProvider, LlamaCppSamplingSettings
 from llama_cpp_agent import MessagesFormatterType
 from llama_cpp_agent.messages_formatter import get_predefined_messages_formatter, PromptMarkers, MessagesFormatter
 from anthropic import Anthropic
-from typing import Union
+from typing import Union, Optional, Any
 
 from mistralai.client import MistralClient
 from mistralai.models.chat_completion import ChatMessage
@@ -450,13 +451,23 @@ class AnthropicSettings(ChatAPISettings):
     def __init__(self):
         self.temperature = 0.7
         self.top_p = 1.0
+        self.top_k = 0.0
         self.max_tokens = 1024
+        self.stop_sequences = []
+        self.cache_system_prompt = True
+        self.cache_user_messages = False
+        self.cache_recent_messages = 10
 
     def to_dict(self):
         return {
             'temperature': self.temperature,
             'top_p': self.top_p,
-            'max_tokens': self.max_tokens
+            'top_k': self.top_k,
+            'max_tokens': self.max_tokens,
+            'stop_sequences': self.stop_sequences,
+            'cache_system_prompt': self.cache_system_prompt,
+            'cache_user_messages': self.cache_user_messages,
+            'cache_recent_messages': self.cache_recent_messages
         }
 
 
@@ -466,45 +477,167 @@ class AnthropicChatAPI(ChatAPI):
         self.model = model
         self.settings = AnthropicSettings()
 
-    def _prepare_messages(self, messages: List[Dict[str, str]]) -> tuple:
+    def prepare_messages(self, settings: AnthropicSettings, messages: List[Dict[str, str]]) -> tuple:
         system_message = None
         other_messages = []
-        messages = clean_history_messages(messages)
-        for message in messages:
-            cleaned_message = {k: v for k, v in message.items() if k != 'id'}
-            if cleaned_message['role'] == 'system':
-                system_message = cleaned_message['content']
+        cleaned_messages = clean_history_messages(messages)
+        for i, message in enumerate(cleaned_messages):
+            if message['role'] == 'system':
+                system_message = [
+                    {"type": "text", "text": message['content']}
+                ]
+                if settings.cache_system_prompt:
+                    system_message[0]["cache_control"] = {"type": "ephemeral"}
             else:
-                other_messages.append(cleaned_message)
+                msg = {
+                    'role': message['role'],
+                    'content': [
+                        {
+                            "type": "text",
+                            "text": message["content"]
+                        }
+                    ],
+                }
+                if settings.cache_user_messages:
+                    if i >= len(cleaned_messages) - settings.cache_recent_messages:
+                        msg["content"][0]["cache_control"] = {"type": "ephemeral"}
+
+                other_messages.append(msg)
         return system_message, other_messages
 
-    def get_response(self, messages: List[Dict[str, str]], settings=None) -> str:
-        system, other_messages = self._prepare_messages(messages)
+    def get_response(self, messages: List[Dict[str, str]], settings=None,
+                     tools: Optional[List[FunctionTool]] = None) -> str:
+        system, other_messages = self.prepare_messages(self.settings if settings is None else settings, messages)
+        anthropic_tools = [tool.to_anthropic_tool() for tool in tools] if tools else None
         response = self.client.messages.create(
+            extra_headers={
+                "anthropic-beta": "prompt-caching-2024-07-31"
+            } if self.settings.cache_system_prompt or (settings is not None and settings.cache_system_prompt) else None,
             model=self.model,
-            system=system,
+            system=system if system else [],
             messages=other_messages,
             temperature=self.settings.temperature if settings is None else settings.temperature,
             top_p=self.settings.top_p if settings is None else settings.top_p,
-            max_tokens=self.settings.max_tokens if settings is None else settings.max_tokens
+            top_k=self.settings.top_k if settings is None else settings.top_k,
+            max_tokens=self.settings.max_tokens if settings is None else settings.max_tokens,
+            stop_sequences=self.settings.stop_sequences if settings is None else settings.stop_sequences,
+            tools=anthropic_tools
         )
+        if tools and (response.content[0].type == 'tool_use' or (
+                len(response.content) > 1 and response.content[1].type == 'tool_use')):
+            if response.content[0].type == 'tool_use':
+                return json.dumps({
+                    "content": None,
+                    "tool_calls": [{
+                        "function": {
+                            "id": response.content[0].id,
+                            "name": response.content[0].name,
+                            "arguments": response.content[0].input
+                        }
+                    }]
+                })
+            elif response.content[1].type == 'tool_use':
+                return json.dumps({
+                    "content": response.content[0].text,
+                    "tool_calls": [{
+                        "function": {
+                            "id": response.content[1].id,
+                            "name": response.content[1].name,
+                            "arguments": response.content[1].input
+                        }
+                    }]
+                })
         return response.content[0].text
 
-    def get_streaming_response(self, messages: List[Dict[str, str]], settings=None) -> Generator[str, None, None]:
-        system, other_messages = self._prepare_messages(messages)
+    def get_streaming_response(self, messages: List[Dict[str, str]], settings=None,
+                               tools: Optional[List[FunctionTool]] = None) -> Generator[str, None, None]:
+        system, other_messages = self.prepare_messages(self.settings if settings is None else settings, messages)
+        anthropic_tools = [tool.to_anthropic_tool() for tool in tools] if tools else None
+
         stream = self.client.messages.create(
+            extra_headers={
+                "anthropic-beta": "prompt-caching-2024-07-31"
+            } if self.settings.cache_system_prompt or (settings is not None and settings.cache_system_prompt) else None,
             model=self.model,
-            system=system,
+            system=system if system else [],
             messages=other_messages,
             stream=True,
             temperature=self.settings.temperature if settings is None else settings.temperature,
             top_p=self.settings.top_p if settings is None else settings.top_p,
-            max_tokens=self.settings.max_tokens if settings is None else settings.max_tokens
+            max_tokens=self.settings.max_tokens if settings is None else settings.max_tokens,
+            tools=anthropic_tools if anthropic_tools else []
         )
+
+        current_tool_call = None
+        content = ""
         for chunk in stream:
-            if chunk.type == "content_block_delta":
+            if chunk.type == "content_block_start":
+                if chunk.content_block.type == "tool_use":
+                    current_tool_call = {
+                        "function": {
+                            "id": chunk.content_block.id,
+                            "name": chunk.content_block.name,
+                            "arguments": ""
+                        }
+                    }
+            elif chunk.type == "content_block_delta":
                 if chunk.delta.type == "text_delta":
+                    content += chunk.delta.text
                     yield chunk.delta.text
+                elif chunk.delta.type == "input_json_delta":
+                    if current_tool_call:
+                        current_tool_call["function"]["arguments"] += chunk.delta.partial_json
+
+            elif chunk.type == "content_block_stop":
+                if current_tool_call:
+                    yield json.dumps({
+                        "content": content if len(content) > 0 else None,
+                        "tool_calls": [current_tool_call]
+                    })
+                    current_tool_call = None
+
+    def generate_tool_use_message(self, content: str, tool_call_id: str, tool_name: str, tool_args: str) -> Dict[
+        str, Any]:
+        if content is None or len(content) == 0:
+            return {
+                "role": "assistant",
+                "content": [
+                    {
+                        "type": "tool_use",
+                        "id": tool_call_id,
+                        "name": tool_name,
+                        "input": json.loads(tool_args) if isinstance(tool_args, str) else tool_args
+                    }
+                ]
+            }
+        else:
+            return {
+                "role": "assistant",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": content
+                    },
+                    {
+                        "type": "tool_use",
+                        "id": tool_call_id,
+                        "name": tool_name,
+                        "input": json.loads(tool_args) if isinstance(tool_args, str) else tool_args
+                    }
+                ]
+            }
+
+    def generate_tool_response_message(self, tool_call_id: str, tool_name: str, tool_response: str) -> Dict[str, Any]:
+        return {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "tool_use_id": tool_call_id,
+                    "content": tool_response
+                }
+            ]
+        }
 
     def get_default_settings(self):
         return AnthropicSettings()

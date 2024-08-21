@@ -2,8 +2,8 @@ import os
 
 from dotenv import load_dotenv
 
-from ToolAgents.provider.chat_api_provider.chat_api_with_tools import AnthropicChatAPI, AnthropicSettings
-from ToolAgents.agents import ChatAPIAgent
+from ToolAgents.provider import LlamaCppServerProvider, LlamaCppSamplingSettings
+from ToolAgents.agents import MistralAgent
 from ToolAgents.utilities import ChatHistory
 from VirtualGameMaster.game_state import GameState
 from VirtualGameMaster.memory.game_world_knowledge_graph import GameWorldKnowledgeGraph, GameEntityType, GameEntity, \
@@ -13,14 +13,13 @@ from code_executer import PythonCodeExecutor, system_message_code_agent, run_cod
 
 load_dotenv()
 
-provider = AnthropicChatAPI(os.getenv("API_KEY"), "claude-3-5-sonnet-20240620")
-agent = ChatAPIAgent(chat_api=provider, debug_output=False)
+provider = LlamaCppServerProvider("http://127.0.0.1:8080")
+agent = MistralAgent(provider=provider, debug_output=False)
 
-settings = AnthropicSettings()
+settings = LlamaCppSamplingSettings()
 settings.temperature = 0.75
 settings.max_tokens = 4096
-settings.cache_user_messages = False
-settings.stop_sequences = ["```\n"]
+
 
 system_prompt_template = f'''# Task and Instructions
 
@@ -404,10 +403,10 @@ You have to end your response after using the Python Interpreter to get the resu
 Remember, your role is to create an immersive, reactive, and engaging game world. Use the provided game state and the game world knowledge graph as a foundation, but don't be afraid to expand upon it creatively while maintaining consistency. Your goal is to deliver a rich, personalized gaming experience that responds dynamically to the player's choices and actions.
 '''
 game_state_file = "../game_starters/rpg_candlekeep.yaml"
-chat_save_file = "./chat_candlekeep.json"
-game_world_file = "game_world_candlekeep.json"
+chat_save_file = "./game424.json"
+game_world_file = "game_world424.json"
 
-load_save_file = True
+load_save_file = False
 game_state = GameState(game_state_file)
 
 

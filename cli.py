@@ -1,3 +1,4 @@
+from VirtualGameMaster.virtual_game_master_xml_game_state import VirtualGameMasterXMLGameState
 from virtual_game_master import VirtualGameMasterConfig, VirtualGameMaster
 from chat_api_selector import VirtualGameMasterChatAPISelector
 
@@ -43,8 +44,8 @@ def run_cli(app: VirtualGameMaster):
 # Usage
 if __name__ == "__main__":
     config = VirtualGameMasterConfig.from_env(".env")
-    config.GAME_SAVE_FOLDER = "chat_history/new_gameNemo244"
+    config.GAME_SAVE_FOLDER = "chat_history/new_candlekeep_late_august_24"
     api_selector = VirtualGameMasterChatAPISelector(config)
     api = api_selector.get_api()
-    vgm_app = VirtualGameMaster(config, api, True)
+    vgm_app = VirtualGameMasterXMLGameState(config, api, True)
     run_cli(vgm_app)

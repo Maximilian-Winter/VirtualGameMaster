@@ -12,9 +12,10 @@
     <step>Carefully review the current game state provided below</step>
     <step>Thoroughly analyze the entire chat history that follows the game state</step>
     <step>For each section in the current game state, identify any new or changed information based on the chat history</step>
-    <step>Update the relevant sections to accurately reflect the current game state</step>
-    <step>Ensure each updated section is comprehensive, including both new and previously established information</step>
-    <step>Remove outdated information</step>
+    <step>Update only the relevant sections that have changes or new information</step>
+    <step>For updated sections, provide comprehensive information, including both new and previously established details</step>
+    <step>Remove outdated information from updated sections</step>
+    <step>Do not write out sections that remain unchanged</step>
   </instructions>
 
   <focus-areas>
@@ -59,7 +60,7 @@
   </chat-history>
 
   <update-format>
-    <instruction>For each section that requires updating, use the same XML format as in the following example for adding a companion</instruction>
+    <instruction>For each section that requires updating, use the same XML format as in the following example for adding a companion. Only include sections that have been changed or added.</instruction>
     <example>
       <game-state>
         <companions>
@@ -72,14 +73,15 @@
   </update-format>
 
   <update-guidelines>
+    <guideline>Only write out sections that have been changed or added</guideline>
     <guideline>Maintain consistency with previously established facts</guideline>
     <guideline>Incorporate new developments from the chat history</guideline>
-    <guideline>Provide comprehensive information, not just changes</guideline>
-    <guideline>Reflect the current state of the game world, characters, and plot</guideline>
-    <guideline>Are only using XML tags for the sections not their content</guideline>
+    <guideline>For updated sections, provide comprehensive information, not just changes</guideline>
+    <guideline>Reflect the current state of the game world, characters, and plot in updated sections</guideline>
+    <guideline>Do not include unchanged sections in the output</guideline>
   </update-guidelines>
 
   <goal>
-    Create an updated game state that accurately reflects all relevant information from both the previous state and recent developments in the chat history. This updated state will be used to inform future gameplay and narrative decisions, so attention to detail and narrative consistency are crucial.
+    Create an updated game state that accurately reflects all relevant information from both the previous state and recent developments in the chat history. Include only sections that have been changed or added. This updated state will be used to inform future gameplay and narrative decisions, so attention to detail and narrative consistency are crucial.
   </goal>
 </update-system-prompt>

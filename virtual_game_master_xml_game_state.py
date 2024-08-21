@@ -7,7 +7,7 @@ from typing import Tuple, Generator
 from xml_game_state import XMLGameState
 from config import VirtualGameMasterConfig
 from message_template import MessageTemplate
-from chat_api import ChatAPI
+from chat_api import ChatAPI, AnthropicSettings
 from chat_history import ChatHistory, Message, ChatFormatter
 
 from command_system import CommandSystem
@@ -139,11 +139,16 @@ class VirtualGameMasterXMLGameState:
             game_state=self.game_state.get_xml_string(),
             CHAT_HISTORY=formatted_chat)
 
+        settings = self.api.get_current_settings()
+
+        if isinstance(settings, AnthropicSettings):
+            settings.cache_system_prompt = False
+
         print(prompt)
 
         prompt_message = [{"role": "system",
-                           "content": "You are an AI assistant tasked with updating the game state of a text-based role-playing game."},
-                          {"role": "user", "content": prompt}]
+                           "content": prompt},
+                          {"role": "user", "content": "Provide the updated and added elements in XML format, nothing else!"}]
         response_gen = self.api.get_streaming_response(prompt_message)
 
         full_response = ""
@@ -158,6 +163,8 @@ class VirtualGameMasterXMLGameState:
         self.history_offset = len(self.history.messages) - self.kept_messages
 
         self.save()
+        if isinstance(settings, AnthropicSettings):
+            settings.cache_system_prompt = True
 
     def save(self):
         self.history.save_history()

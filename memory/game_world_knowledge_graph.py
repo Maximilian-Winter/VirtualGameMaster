@@ -169,7 +169,7 @@ class GameWorldKnowledgeGraph:
         self.knowledge_graph = KnowledgeGraph()
         self.entity_counters = {}
 
-    def generate_entity_id(self, entity_type: GameEntityType) -> str:
+    def generate_entity_id(self, entity_type: str) -> str:
         if entity_type in self.entity_counters:
             self.entity_counters[entity_type] += 1
         else:
@@ -318,14 +318,14 @@ class GameWorldKnowledgeGraph:
             result += f"- {entity_id}: {entity_data.get('name', 'Unnamed entity')}\n"
         return result
 
-    def get_nearby_entities(self, location_id: str, game_entity_type: Optional[GameEntityType] = None,
+    def get_nearby_entities(self, location_id: str, game_entity_type: Optional[str] = None,
                             max_distance: int = 2):
         """
         Finds entities that are near a specified location in the knowledge graph.
 
         Args:
             location_id (str): The ID of the location to search from.
-            game_entity_type (Optional[GameEntityType]): The type of game entity to filter by.
+            game_entity_type (Optional[str]): The type of game entity to filter by.
             max_distance (int): The maximum distance (in graph edges) to search.
 
         Returns:

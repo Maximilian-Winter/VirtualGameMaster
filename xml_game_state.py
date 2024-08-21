@@ -44,7 +44,7 @@ def merge_xml_update(original_root, update_string):
     def recursive_update(original_element, update_element):
         for update_child in update_element:
             matching_original = original_element.find(update_child.tag)
-            if matching_original is None or matching_original.tag == "item":
+            if matching_original is None:
                 # If the element doesn't exist in the original, append it
                 original_element.append(update_child)
             else:
@@ -79,7 +79,7 @@ class XMLGameState:
         return xml_to_string(self.xml_root_node)
 
     def update_xml_from_string(self, xml_string: str):
-        merge_xml_update(self.xml_root_node, xml_string.replace("\n", ""))
+        merge_xml_update(self.xml_root_node, xml_string.replace("\n", "").replace("\r", "").replace("\t", "").replace("  ", ""))
 
     def save_to_xml_file(self, file_path: str):
         with open(file_path, 'w', encoding='utf-8') as file:
