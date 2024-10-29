@@ -1,6 +1,6 @@
 from typing import Dict, Any
 from pydantic import BaseModel, Field
-from knowledge_graph import KnowledgeGraph, Entity, EntityQuery
+from enhanced_knowledge_graph import KnowledgeGraph, Entity, EntityQuery
 
 # Initialize the knowledge graph
 kg = KnowledgeGraph()

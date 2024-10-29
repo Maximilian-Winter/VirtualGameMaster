@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 
 import requests
 from groq import Groq
+from mistral_common.protocol.instruct.messages import ChatMessage
 
 from openai import OpenAI
 
@@ -16,7 +17,7 @@ from anthropic import Anthropic
 from typing import Union, Optional, Any
 
 from mistralai.client import MistralClient
-from mistralai.models.chat_completion import ChatMessage
+
 
 from typing import List, Dict, Generator
 
@@ -445,6 +446,8 @@ class LlamaAgentProviderCustom(ChatAPI):
 
     def get_current_settings(self):
         return self.settings
+
+
 
 
 class AnthropicSettings(ChatAPISettings):

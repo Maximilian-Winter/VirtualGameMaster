@@ -6,14 +6,13 @@ from kivy.uix.label import Label
 from kivy.core.window import Window
 from kivy.clock import Clock
 
-from rpg_app import Config, OpenAIChatAPI, RPGApp
 
 class RPGAndroidApp(App):
     def build(self):
-        self.config = Config()
-        api = OpenAIChatAPI(self.config.OPEN_ROUTER_API_KEY, "https://openrouter.ai/api/v1", self.config.MODEL)
-        self.rpg_app = RPGApp(self.config, api)
-        self.rpg_app.load()
+        self.config = None
+        api = None
+        self.rpg_app = None
+        #self.rpg_app.load()
 
         layout = BoxLayout(orientation='vertical')
 

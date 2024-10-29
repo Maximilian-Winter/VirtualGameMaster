@@ -382,7 +382,7 @@ class KnowledgeGraph:
 
         # Add edges
         for u, v, data in self.graph.edges(data=True):
-            label = data.get("relationship", "")
+            label = data.get("relationship_type", "")
             dot.edge(u, v, label=label)
 
         # Render the graph

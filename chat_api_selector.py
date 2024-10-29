@@ -46,7 +46,7 @@ class VirtualGameMasterChatAPISelector:
             api.settings.tfs_z = self.config.TFS_Z
             api.settings.additional_stop_sequences = json.loads(self.config.STOP_SEQUENCES)
 
-        if self.config.API_TYPE is "groq":
+        if self.config.API_TYPE == "groq":
             api.settings.stop = json.loads(self.config.STOP_SEQUENCES)
 
         return api

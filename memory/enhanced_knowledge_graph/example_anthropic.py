@@ -495,7 +495,7 @@ You have to end your response after using the Python Interpreter to get the resu
 ---
 Remember, your role is to create an immersive, reactive, and engaging game world. Use the provided game state and the game world knowledge graph as a foundation, but don't be afraid to expand upon it creatively while maintaining consistency. Your goal is to deliver a rich, personalized gaming experience that responds dynamically to the player's choices and actions.
 '''
-game_state_file = "../game_starters/rpg_candlekeep.yaml"
+game_state_file = "../../game_starters/rpg_candlekeep.yaml"
 chat_save_file = "./chat_candlekeep.json"
 game_world_file = "game_world_candlekeep.json"
 
