@@ -10,7 +10,6 @@ from VirtualGameMaster.memory.enhanced_knowledge_graph.enhanced_knowledge_graph 
     EntityQuery
 
 from VirtualGameMaster.message_template import MessageTemplate
-from code_executer import PythonCodeExecutor, run_code_agent
 
 load_dotenv()
 

@@ -2,6 +2,7 @@ import os
 
 from dotenv import load_dotenv
 
+from ToolAgents import ToolRegistry
 from ToolAgents.provider.chat_api_provider.chat_api_with_tools import AnthropicChatAPI, AnthropicSettings
 from ToolAgents.agents import ChatAPIAgent
 from ToolAgents.utilities import ChatHistory
@@ -10,7 +11,6 @@ from VirtualGameMaster.memory.enhanced_knowledge_graph.enhanced_knowledge_graph 
     EntityQuery
 
 from VirtualGameMaster.message_template import MessageTemplate
-from code_executer import PythonCodeExecutor, run_code_agent
 
 load_dotenv()
 
@@ -18,8 +18,8 @@ provider = AnthropicChatAPI(os.getenv("API_KEY"), "claude-3-5-sonnet-20241022")
 agent = ChatAPIAgent(chat_api=provider, debug_output=False)
 
 settings = AnthropicSettings()
-settings.temperature = 0.75
-settings.max_tokens = 4096
+settings.temperature = 1.0
+settings.max_tokens = 8192
 settings.cache_user_messages = False
 settings.cache_system_prompt = True
 settings.stop_sequences = ["```\n"]
@@ -156,282 +156,6 @@ When interacting with players:
 - Be prepared to improvise and adapt to unexpected player actions while maintaining narrative consistency.
 - Seek confirmation if the player attempts an action that seems out of character or inconsistent with their established abilities.
 
-Knowledge Graph Interaction:
-You have access to a Python code interpreter that allows you to execute Python code to interact with the game world knowledge graph. To use the Python code interpreter, write the code you want to execute in a markdown 'python_interpreter' code block. For example:
-
-```python_interpreter
-print('Hello, World!')
-```
-
-You have access to the following predefined functions and types in the Python interpreter:
-
-```python
-class Entity:
-    """
-    A class representing an entity.
-    Attributes:
-        entity_id (str): The entity id. Gets set by the add_entity function.
-        entity_type (str): The type of entity
-        attributes (dict[str, Any]): The entity attributes
-    """
-    def __init__(self, entity_type: str, attributes: dict[str, Any]):
-        self.entity_type = entity_type
-        self.entity_data = attributes
-
-
-class EntityQuery:
-    """
-    A class representing an entity query.
-    Attributes:
-        entity_type (str): The type of entity to query
-        attributes_filter (Optional[Dict]): The entity attributes filter
-    """
-    def __init__(self, entity_type: str, attributes_filter: dict[str, Any] = None):
-        self.entity_type = entity_type
-        self.attributes_filter = attributes_filter
-
-
-def add_entity(entity: Entity) -> str:
-    """
-    Add an entity to the knowledge graph.
-
-    Args:
-        entity (Entity): The entity to add.
-
-    Returns:
-        str: The entity ID.
-    """
-    # Implementation left out for brevity.
-    pass
-
-def update_entity(entity_id: str, new_attributes: Dict[str, Any]) -> str:
-    """
-    Update an existing entity's attributes.
-
-    Args:
-        entity_id (str): The ID of the entity to update.
-        new_attributes (Dict[str, Any]): The new attributes to update or add to the entity.
-
-    Returns:
-        str: A message confirming the update or an error message if the entity was not found.
-    """
-    # Implementation left out for brevity.
-    pass
-
-def delete_entity(entity_id: str) -> str:
-    """
-    Delete an entity from the knowledge graph.
-
-    Args:
-        entity_id (str): The ID of the entity to delete.
-
-    Returns:
-        str: A message confirming the deletion or an error message if the entity was not found.
-    """
-    # Implementation left out for brevity.
-    pass
-
-def query_entities(entity_query: EntityQuery) -> str:
-    """
-    Query entities in the knowledge graph based on type and attributes.
-
-    Args:
-        entity_query (EntityQuery): The entity query parameters.
-
-    Returns:
-        str: A formatted string containing the query results.
-    """
-    # Implementation left out for brevity.
-    pass
-
-def add_relationship(first_entity_id: str, relationship_type: str, second_entity_id: str, attributes: Optional[Dict[str, Any]] = None) -> str:
-    """
-    Add a relationship between two entities in the knowledge graph.
-
-    Args:
-        first_entity_id (str): The ID of the first entity.
-        relationship_type (str): The type of the relationship.
-        second_entity_id (str): The ID of the second entity.
-        attributes (Optional[Dict[str, Any]]): Additional attributes for the relationship.
-
-    Returns:
-        str: A message confirming the addition of the relationship.
-    """
-    # Implementation left out for brevity.
-    pass
-
-def query_relationships(entity_id: str, relationship_type: Optional[str] = None) -> str:
-    """
-    Query relationships of an entity in the knowledge graph.
-
-    Args:
-        entity_id (str): The ID of the entity to query relationships for.
-        relationship_type (Optional[str]): The type of relationship to filter by.
-
-    Returns:
-        str: A formatted string containing the query results.
-    """
-    # Implementation left out for brevity.
-    pass
-
-def semantic_search(query: str, top_k: int = 5) -> str:
-    """
-    Perform semantic search on the knowledge graph using embeddings.
-
-    Args:
-        query (str): The search query.
-        top_k (int): The number of top results to return.
-
-    Returns:
-        str: A formatted string containing the top-k matching entities and their similarities.
-    """
-    # Implementation left out for brevity.
-    pass
-    
-def get_entity_details(entity_id: str) -> str:
-    """
-    Retrieve detailed information about a specific entity.
-
-    Args:
-        entity_id (str): The ID of the entity to retrieve details for.
-
-    Returns:
-        str: A formatted string containing the detailed information of the entity.
-    """
-    # Implementation left out for brevity.
-    pass
-```
-
-The following examples, show how to use the predefined types and functions in the Python Interpreter:
-
-1. Adding an entity:
-
-```python_interpreter
-# Creating a new character entity
-new_character = Entity(
-    entity_type="Character",
-    attributes={{
-        "name": "Elara Swiftwind",
-        "race": "Elf",
-        "profession": "Ranger",
-        "age": 150
-    }}
-)
-
-# Adding the character to the knowledge graph
-character_id = add_entity(new_character)
-print(f"Added character with ID: {{character_id}}")
-```
-
-2. Updating an entity:
-
-```python_interpreter
-# Updating Elara's age and adding a new attribute
-updated_attributes ={{
-    "age": 151,
-    "skills": ["archery", "tracking", "stealth"]
-}}
-update_result = update_entity(character_id, updated_attributes)
-print(update_result)
-
-# Verify the update
-elara_details = get_entity_details(character_id)
-print(elara_details)
-```
-
-3. Deleting an entity:
-
-```python_interpreter
-# Creating a temporary entity to delete
-temp_entity = Entity(
-    entity_type="Item",
-    attributes={{
-        "name": "Temporary Scroll",
-        "description": "A scroll that will be deleted"
-    }}
-)
-temp_id = add_entity(temp_entity)
-
-# Deleting the temporary entity
-delete_result = delete_entity(temp_id)
-print(delete_result)
-
-# Trying to get details of the deleted entity (should return an error)
-deleted_entity_details = get_entity_details(temp_id)
-print(deleted_entity_details)
-```
-
-4. Querying entities:
-
-```python_interpreter
-# Query all elf characters
-elf_query = EntityQuery(
-    entity_type="Character",
-    attributes_filter={{"race": "Elf"}}
-)
-elf_characters = query_entities(elf_query)
-print(elf_characters)
-
-# Query all locations
-location_query = EntityQuery(entity_type="Location")
-locations = query_entities(location_query)
-print(locations)
-```
-
-5. Adding a relationship:
-
-```python_interpreter
-# Let's create a forest location and add a relationship:
-forest_location = GameEntity(
-    entity_type="Location",
-    attributes={{
-        "name": "Redwine Forest",
-        "description": "A mystical forest."
-    }}
-)
-forest_id = add_entity(forest_location)
-
-# Adding a relationship between Elara and the forest
-add_relationship(character_id, "resides in", forest_id, {{ "description": "Elara's home in the mystical forest" }})
-print("Relationship added successfully")
-```
-
-6. Querying relationships:
-
-```python_interpreter
-# Query all relationships for Elara
-elara_relationships = query_relationships(character_id, None)
-print(elara_relationships)
-
-# Query specific relationship type for Elara
-elara_residences = query_relationships(character_id, "resides in")
-print(elara_residences)
-```
-
-7. Using semantic search:
-
-```python_interpreter
-# Perform a semantic search for entities related to "mystical forest"
-search_query = "mystical forest"
-search_results = semantic_search(search_query, top_k=3)
-print(f"Top 3 results for '{{search_query}}':")
-print(search_results)
-
-# Perform another semantic search for entities related to "skilled archer"
-search_query = "skilled archer"
-search_results = semantic_search(search_query, top_k=2)
-print(f"Top 2 results for '{{search_query}}':")
-print(search_results)
-```
-
-8. Getting entity details:
-
-```python_interpreter
-# Get detailed information about Elara
-elara_details = get_entity_details(character_id)
-print(elara_details)
-```
-
 Best Practices for Knowledge Graph Use:
 1. Maintain consistent naming conventions for entities and relationships.
 2. Ensure all relevant attributes are included when adding or updating entities.
@@ -467,7 +191,7 @@ game_state_file = "../../game_starters/rpg_candlekeep.yaml"
 chat_save_file = "./chat_candlekeep.json"
 game_world_file = "game_world_candlekeep.json"
 
-load_save_file = False
+load_save_file = True
 game_state = GameState(game_state_file)
 
 
@@ -482,9 +206,9 @@ tools = game_world.get_tools()
 
 system_message_template = MessageTemplate.from_string(system_prompt_template)
 
-python_code_executor = PythonCodeExecutor(
-    tools=tools,
-    predefined_classes=[Entity, EntityQuery])
+tool_registry = ToolRegistry()
+
+tool_registry.add_tools(tools)
 
 
 system_message = system_message_template.generate_message_content(game_state.template_fields)
@@ -494,7 +218,7 @@ chat = chat_history.to_list()
 
 for message in chat[-6:]:
     print("Game Master:" if message["role"] == "assistant" else "Player:")
-    print(message["content"] + "\n\n")
+    print(message["content"])
 
 if len(chat) == 0:
     chat_history.add_system_message(system_message)
@@ -503,8 +227,17 @@ while True:
     user_input = input("> ")
     if user_input == "quit":
         break
-    run_code_agent(agent=agent, settings=settings, chat_history=chat_history, user_input=user_input,
-                   python_code_executor=python_code_executor)
+    chat_history.add_user_message(user_input)
+    # Get a response
+    result_generator = agent.get_streaming_response(
+        messages=chat_history.to_list(),
+        tool_registry=tool_registry,
+        settings=settings
+    )
+    for res in result_generator:
+        print(res, end="", flush=True)
+    print("\n\n")
+    chat_history.add_list_of_dicts(agent.last_messages_buffer)
     game_world.save_to_file(game_world_file)
     chat_history.save_history(chat_save_file)
 

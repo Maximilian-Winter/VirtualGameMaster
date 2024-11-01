@@ -165,10 +165,12 @@ class KnowledgeGraph:
             return f"Error: Entity with ID {first_entity_id} not found"
         if second_entity_id not in self.graph:
             return f"Error: Entity with ID {second_entity_id} not found"
-
-        self.graph.add_edge(first_entity_id, second_entity_id,
-                            relationship_type=relationship_type,
-                            **attributes if attributes else {})
+        try:
+            self.graph.add_edge(first_entity_id, second_entity_id,
+                                relationship_type=relationship_type,
+                                **attributes if attributes else {})
+        except Exception as e:
+            return f"Error: {e.with_traceback(None)}"
         return f"Relationship '{relationship_type}' added successfully between entities {first_entity_id} and {second_entity_id}"
 
     def query_relationships(self, entity_id: str, relationship_type: Optional[str] = None) -> str:

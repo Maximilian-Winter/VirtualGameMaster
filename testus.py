@@ -19,6 +19,7 @@ class ChatFormatter:
             formatted_chat.append(formatted_message)
         return '\n'.join(formatted_chat)
 
+
 class Message:
     def __init__(self, role: str, content: str, message_id: int = None):
         self.role = role
@@ -27,6 +28,8 @@ class Message:
 
     def to_dict(self) -> Dict[str, Any]:
         return {"role": self.role, "content": self.content, "id": self.id}
+
+
 class ChatHistory:
     def __init__(self, history_folder: str):
         self.messages: List[Message] = []
@@ -94,6 +97,7 @@ class ChatHistory:
             print(f"Error loading chat history: {e}. Starting with an empty history.")
             self.messages = []
 
+
 history = ChatHistory("chat_history/new_gameClaude")
 history.load_history()
 messages = history.to_list()
@@ -109,6 +113,7 @@ formatted_chat = formatter.format_messages(messages)
 
 import difflib
 
+
 def generate_diff_example(old_content, new_content):
     """Generate a diff example to show the LLM."""
     diff = difflib.unified_diff(
@@ -120,4 +125,6 @@ def generate_diff_example(old_content, new_content):
     )
     return ''.join(diff)
 
-print(generate_diff_example("Hello, World!\nHello, World!\nHello, World!\n", "Hello, World.\nHello, World.\nHello, World.\n"))
+
+print(generate_diff_example("Hello, World!\nHello, World!\nHello, World!\n",
+                            "Hello, World.\nHello, World.\nHello, World.\n"))

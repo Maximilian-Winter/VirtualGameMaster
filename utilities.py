@@ -3,6 +3,7 @@ from typing import Dict, Any
 
 import yaml
 
+
 def load_yaml_initial_game_state(file_path: str) -> Dict[str, Any]:
     if os.path.exists(file_path):
         try:
@@ -29,9 +30,9 @@ def load_yaml_initial_game_state(file_path: str) -> Dict[str, Any]:
                             if isinstance(value, list):
                                 result.append(f"{' ' * indent}- {key}:")
                                 for subitem in value:
-                                    result.append(f"{' ' * (indent+2)}- {subitem}")
+                                    result.append(f"{' ' * (indent + 2)}- {subitem}")
                             else:
-                                result.append(f"{' ' * indent}- {key}: {process_value(value, indent+2)}")
+                                result.append(f"{' ' * indent}- {key}: {process_value(value, indent + 2)}")
                         return '\n'.join(result)
                     else:
                         return f"{' ' * indent}- {item}"
@@ -41,12 +42,12 @@ def load_yaml_initial_game_state(file_path: str) -> Dict[str, Any]:
                     for key, value in d.items():
                         if isinstance(value, dict):
                             result.append(f"{' ' * indent}{key}:")
-                            result.append(process_dict(value, indent+2))
+                            result.append(process_dict(value, indent + 2))
                         elif isinstance(value, list):
                             result.append(f"{' ' * indent}{key}:")
-                            result.append(process_value(value, indent+2))
+                            result.append(process_value(value, indent + 2))
                         else:
-                            result.append(f"{' ' * indent}{key}: {process_value(value, indent+2)}")
+                            result.append(f"{' ' * indent}{key}: {process_value(value, indent + 2)}")
                     return '\n'.join(result)
 
                 def process_special_item(item, indent=0):
@@ -55,7 +56,7 @@ def load_yaml_initial_game_state(file_path: str) -> Dict[str, Any]:
                         if isinstance(value, list):
                             result.append(f"{' ' * indent}{key}:")
                             for subitem in value:
-                                result.append(f"{' ' * (indent+2)}- {subitem}")
+                                result.append(f"{' ' * (indent + 2)}- {subitem}")
                         else:
                             result.append(f"{' ' * indent}{key}: {value}")
                     return '\n'.join(result)

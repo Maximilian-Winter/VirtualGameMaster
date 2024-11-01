@@ -16,6 +16,7 @@ import json
 import networkx as nx
 import holoviews as hv
 from holoviews import opts
+
 hv.extension('bokeh')
 from ToolAgents import FunctionTool
 
@@ -337,68 +338,10 @@ class KnowledgeGraph:
 
         return result
 
-    def save_to_file(self, filename: str) -> None:
-        """
-        Save the EnhancedGeneralizedKnowledgeGraph to a JSON file.
-
-        Args:
-            filename (str): The name of the file to save to.
-        """
-        data = {
-            "graph": nx.node_link_data(self.graph),
-            "entity_counters": self.entity_counters,
-            "embeddings": {k: v.tolist() for k, v in self.embeddings.items()}
-        }
-        with open(filename, 'w') as f:
-            json.dump(data, f)
-
-    @classmethod
-    def load_from_file(cls, filename: str) -> 'KnowledgeGraph':
-        """
-        Load an EnhancedGeneralizedKnowledgeGraph from a JSON file.
-
-        Args:
-            filename (str): The name of the file to load from.
-
-        Returns:
-            EnhancedGeneralizedKnowledgeGraph: The loaded knowledge graph.
-        """
-        with open(filename, 'r') as f:
-            data = json.load(f)
-
-        gkg = cls()
-        gkg.graph = nx.node_link_graph(data['graph'])
-        gkg.entity_counters = data['entity_counters']
-        gkg.embeddings = {k: np.array(v) for k, v in data['embeddings'].items()}
-        return gkg
-
-    def visualize(self, output_file: str = "knowledge_graph", format: str = "png") -> None:
-        """
-        Visualize the knowledge graph using Graphviz.
-
-        Args:
-            output_file (str): Name of the output file (without extension)
-            format (str): Output format (e.g., "png", "pdf", "svg")
-        """
-        dot = graphviz.Digraph(comment="Knowledge Graph")
-
-        # Add nodes
-        for node, data in self.graph.nodes(data=True):
-            label = f"{node}\n{json.dumps(data, indent=2)}"
-            dot.node(node, label)
-
-        # Add edges
-        for u, v, data in self.graph.edges(data=True):
-            label = data.get("relationship_type", "")
-            dot.edge(u, v, label=label)
-
-        # Render the graph
-        dot.render(output_file, format=format, cleanup=True)
-        print(f"Graph visualization saved as {output_file}.{format}")
-
     def get_tools(self):
         return [FunctionTool(self.add_entity), FunctionTool(self.update_entity), FunctionTool(self.delete_entity),
-                FunctionTool(self.query_entities), FunctionTool(self.add_relationship), FunctionTool(self.query_relationships),
+                FunctionTool(self.query_entities), FunctionTool(self.add_relationship),
+                FunctionTool(self.query_relationships),
                 FunctionTool(self.semantic_search), FunctionTool(self.get_entity_details)]
 
     def get_subgraph(self, entity_ids: List[str]) -> 'KnowledgeGraph':
@@ -480,8 +423,8 @@ class KnowledgeGraph:
         """
         try:
             path = dijkstra_path(self.graph, start_entity_id, end_entity_id, weight=weight_attribute)
-            total_weight = sum(self.graph[path[i]][path[i+1]][weight_attribute]
-                               for i in range(len(path)-1))
+            total_weight = sum(self.graph[path[i]][path[i + 1]][weight_attribute]
+                               for i in range(len(path) - 1))
             return path, total_weight
         except nx.NetworkXNoPath:
             return [], float('inf')
@@ -509,6 +452,41 @@ class KnowledgeGraph:
             cluster_dict[int(cluster)].append(entity_id)
 
         return dict(cluster_dict)
+
+    def save_to_file(self, filename: str) -> None:
+        """
+        Save the EnhancedGeneralizedKnowledgeGraph to a JSON file.
+
+        Args:
+            filename (str): The name of the file to save to.
+        """
+        data = {
+            "graph": nx.node_link_data(self.graph),
+            "entity_counters": self.entity_counters,
+            "embeddings": {k: v.tolist() for k, v in self.embeddings.items()}
+        }
+        with open(filename, 'w') as f:
+            json.dump(data, f)
+
+    @classmethod
+    def load_from_file(cls, filename: str) -> 'KnowledgeGraph':
+        """
+        Load an EnhancedGeneralizedKnowledgeGraph from a JSON file.
+
+        Args:
+            filename (str): The name of the file to load from.
+
+        Returns:
+            EnhancedGeneralizedKnowledgeGraph: The loaded knowledge graph.
+        """
+        with open(filename, 'r') as f:
+            data = json.load(f)
+
+        gkg = cls()
+        gkg.graph = nx.node_link_graph(data['graph'])
+        gkg.entity_counters = data['entity_counters']
+        gkg.embeddings = {k: np.array(v) for k, v in data['embeddings'].items()}
+        return gkg
 
     def export_to_csv(self, nodes_file: str, edges_file: str) -> None:
         """
@@ -555,32 +533,6 @@ class KnowledgeGraph:
 
         with open(filename, 'w') as f:
             yaml.dump(data, f, default_flow_style=False)
-
-    def plot_graph_metrics(self, output_file: str = "graph_metrics.png") -> None:
-        """
-        Generate and save a plot of various graph metrics.
-
-        Args:
-            output_file (str): Path to save the metrics plot
-        """
-        metrics = {
-            'Degree Distribution': dict(nx.degree(self.graph)),
-            'Clustering Coefficients': nx.clustering(self.graph),
-            'Betweenness Centrality': nx.betweenness_centrality(self.graph)
-        }
-
-        fig, axes = plt.subplots(1, 3, figsize=(15, 5))
-        fig.suptitle('Graph Metrics Analysis')
-
-        for ax, (metric_name, values) in zip(axes, metrics.items()):
-            ax.hist(list(values.values()), bins=20)
-            ax.set_title(metric_name)
-            ax.set_xlabel('Value')
-            ax.set_ylabel('Frequency')
-
-        plt.tight_layout()
-        plt.savefig(output_file)
-        plt.close()
 
     def get_entity_statistics(self) -> Dict[str, Any]:
         """
@@ -658,6 +610,56 @@ class KnowledgeGraph:
 
         # Write to GraphML
         nx.write_graphml(graph_copy, filename)
+
+    def visualize(self, output_file: str = "knowledge_graph", format: str = "png") -> None:
+        """
+        Visualize the knowledge graph using Graphviz.
+
+        Args:
+            output_file (str): Name of the output file (without extension)
+            format (str): Output format (e.g., "png", "pdf", "svg")
+        """
+        dot = graphviz.Digraph(comment="Knowledge Graph")
+
+        # Add nodes
+        for node, data in self.graph.nodes(data=True):
+            label = f"{node}\n{json.dumps(data, indent=2)}"
+            dot.node(node, label)
+
+        # Add edges
+        for u, v, data in self.graph.edges(data=True):
+            label = data.get("relationship_type", "")
+            dot.edge(u, v, label=label)
+
+        # Render the graph
+        dot.render(output_file, format=format, cleanup=True)
+        print(f"Graph visualization saved as {output_file}.{format}")
+
+    def plot_graph_metrics(self, output_file: str = "graph_metrics.png") -> None:
+        """
+        Generate and save a plot of various graph metrics.
+
+        Args:
+            output_file (str): Path to save the metrics plot
+        """
+        metrics = {
+            'Degree Distribution': dict(nx.degree(self.graph)),
+            'Clustering Coefficients': nx.clustering(self.graph),
+            'Betweenness Centrality': nx.betweenness_centrality(self.graph)
+        }
+
+        fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+        fig.suptitle('Graph Metrics Analysis')
+
+        for ax, (metric_name, values) in zip(axes, metrics.items()):
+            ax.hist(list(values.values()), bins=20)
+            ax.set_title(metric_name)
+            ax.set_xlabel('Value')
+            ax.set_ylabel('Frequency')
+
+        plt.tight_layout()
+        plt.savefig(output_file)
+        plt.close()
 
     def visualize_interactive_plotly(self, layout: str = 'spring',
                                      title: str = 'Interactive Knowledge Graph',
@@ -753,7 +755,7 @@ class KnowledgeGraph:
                 title=title,
                 showlegend=False,
                 hovermode='closest',
-                margin=dict(b=20,l=5,r=5,t=40),
+                margin=dict(b=20, l=5, r=5, t=40),
                 xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
                 yaxis=dict(showgrid=False, zeroline=False, showticklabels=False)
             )
@@ -990,3 +992,6 @@ class KnowledgeGraph:
             fig.write_html(save_html)
 
         return fig
+
+kg = KnowledgeGraph.load_from_file("game_world_candlekeep.json")
+kg.visualize_interactive_pyvis()

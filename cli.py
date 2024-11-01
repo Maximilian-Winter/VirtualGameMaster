@@ -1,4 +1,3 @@
-from VirtualGameMaster.virtual_game_master_xml_game_state import VirtualGameMasterXMLGameState
 from virtual_game_master import VirtualGameMasterConfig, VirtualGameMaster
 from chat_api_selector import VirtualGameMasterChatAPISelector
 

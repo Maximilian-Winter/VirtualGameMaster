@@ -4,21 +4,20 @@ import os
 
 from typing import Tuple, Generator
 
+from ToolAgents.interfaces.base_llm_agent import BaseToolAgent
+from ToolAgents.utilities import ChatHistory
+from ToolAgents.utilities.chat_history import Message
 from game_state import GameState
 from config import VirtualGameMasterConfig
 from message_template import MessageTemplate
-from chat_api import ChatAPI
-from chat_history import ChatHistory, Message, ChatFormatter
-
 from command_system import CommandSystem
-import commands
 
 
 class VirtualGameMaster:
-    def __init__(self, config: VirtualGameMasterConfig, api: ChatAPI, debug_mode: bool = False):
+    def __init__(self, config: VirtualGameMasterConfig, tool_agent: BaseToolAgent, debug_mode: bool = False):
         self.config = config
         CommandSystem.command_prefix = self.config.COMMAND_PREFIX
-        self.api = api
+        self.tool_agent = tool_agent
         self.system_message_template = MessageTemplate.from_file(
             config.SYSTEM_MESSAGE_FILE
         )
@@ -61,7 +60,7 @@ class VirtualGameMaster:
         self.post_response(full_response)
 
     def pre_response(self, user_input: str) -> list[dict[str, str]]:
-        self.history.add_message(Message("user", user_input.strip(), self.next_message_id))
+        self.history.add_message(Message("user", user_input.strip()))
         self.next_message_id += 1
 
         history = self.history.to_list()
