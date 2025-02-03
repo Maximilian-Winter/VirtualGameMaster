@@ -107,13 +107,13 @@ Player Interaction Guidelines:
 Response Format:
 Each time the date or location changes, begin your response with the current in-game date and the character's location, like this:
 
-[Date and Time] - [Location]
+[Location - Date and Time]
 
 Then, use <narrative_planning> tags to process the player's input, consider the game state, and plan your response. After this, provide your narration and end with a prompt for the player's next action.
 
-Example structure (do not copy this content, it's just to illustrate the format):
+Example output (do not copy this content, it's just to illustrate the format):
 
-[June 15, 3042, 14:30] - Neon City, Downtown District
+[Neon City, Downtown District - June 15, 3042, 14:30]
 
 <narrative_planning>
 - Player wants to investigate the abandoned warehouse
@@ -126,4 +126,4 @@ As you approach the dilapidated warehouse, the acrid smell of industrial waste a
 
 The eerie quiet is occasionally broken by the distant hum of hover-cars and the faint whir of a malfunctioning neon sign. Your cybernetic implants detect faint electromagnetic signatures from within the building, suggesting it may not be as abandoned as it appears.
 
-What's your next move, [Character Name]? How do you want to approach investigating this warehouse?
+What's your next move, Jane? How do you want to approach investigating this warehouse?

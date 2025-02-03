@@ -5,7 +5,6 @@ player_character: >
   Elysia Thunderscribe: A Human female Wizard and Sage of Candlekeep with expressive, indigo eyes full of knowledge and secrets. Her charcoal-black hair is streaked with silver and often loosely tied in a braid, shimmering with astral sparkles whenever she casts a spell. Even though she is in her late twenties, the look in her eyes is ageless, indicating wisdom far beyond her years. Her slender figure is draped in a celestial-blue robe adorned with runic symbols, the fabric shimmering as if dusted with stardust. She carries an ornate staff, topped with a crystal orb pulsating with arcane energy. Though her delicate features might deceive some, her aura emanates formidable power, proof of her prowess in the arcane arts and her extensive knowledge as a Candlekeep sage.
 
 companions:
-  - Lyra Flameheart: An Eladrin female Fighter (Eldritch Knight) and fellow Sage of Candlekeep with eyes that shift color with the seasons - currently a warm amber for summer. Her wild, copper-red hair flows like living flame, occasionally shimmering with fey light. Eternally youthful as an Eladrin, her alabaster skin bears subtle, swirling patterns that glow softly when she uses magic. Lyra's athletic build is encased in elegant elven half-plate armor, its design reminiscent of autumn leaves and forest vines. A longsword with a hilt wrapped in living vines hangs at her side, while a shield emblazoned with the symbol of a tree in four seasonal states is strapped to her back. Despite her martial bearing, there's an otherworldly grace to her movements, hinting at her fey nature. Her expression often shifts between fierce determination and mischievous mirth, reflecting the changeable nature of the Feywild. As a sage, she combines her martial prowess with a deep understanding of arcane lore.
   - Zephyr: A Tiefling female Warlock (Pact of the Genie) in her late 20s. She has vibrant purple skin, spiraling horns adorned with golden rings, and eyes that swirl with gold and violet. Zephyr dresses in flowing, colorful silks that shimmer with an otherworldly quality. She carries an ornate oil lamp (her genie vessel) at her hip, which can serve as a safe haven for up to 4 people for 48 hours. Zephyr is charismatic and flamboyant, skilled in deception and persuasion.
 
 location: >
@@ -76,7 +75,7 @@ time_and_calendar:
   - Time of day:
 
 relationships:
-  - Elysia and Lyra are girlfriends, fellow sages, and adventuring companions.
+  - Elysia and Zephyr are girlfriends, fellow sages, and adventuring companions.
 
 character_details:
   Elysia Thunderscribe:
@@ -89,18 +88,6 @@ character_details:
       - Charcoal-black hair with silver streaks
       - Celestial-blue robe with runic symbols
       - Ornate staff with crystal orb
-  Lyra Flameheart:
-    Race: Eladrin
-    Class: Fighter
-    Subclass: Eldritch Knight
-    Background: Sage of Candlekeep
-    Age: Eternally youthful (typical for Eladrin)
-    Notable features:
-      - Eyes that change color with seasons (currently amber for summer)
-      - Copper-red hair with fey light
-      - Elven half-plate armor designed with nature motifs
-      - Longsword with vine-wrapped hilt
-      - Shield with four-seasons tree symbol
   Zephyr:
     Race: Tiefling
     Class: Warlock
